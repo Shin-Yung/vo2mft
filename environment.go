@@ -3,6 +3,8 @@ package vo2mft
 // Contains parameters necessary to characterize electronic and ionic systems.
 // The order parameters M and W must be determined self-consistently.
 type Environment struct {
+	// Size of BZ on one edge (total number of BZ points is this cubed).
+	BZPointsPerDim int
 	// Hopping parameters, even symmetry (a, c, diagonal axes).
 	Tae, Tce, Tbe float64
 	// Hopping parameters, odd symmetry (a, c, diagonal axes).
