@@ -7,6 +7,7 @@ import (
 import (
 	"github.com/tflovorn/scExplorer/bzone"
 	vec "github.com/tflovorn/scExplorer/vector"
+	"github.com/tflovorn/cmatrix"
 )
 
 // Expect some e.v.'s to be pure real or imaginary - panic if imag/real part
@@ -144,18 +145,45 @@ func (Ds *HoppingEV) Dbo(env *Environment) float64 {
 	return dbo
 }
 
-func GetEV_K0_K0(emv *Environment, k vec.Vector) complex128 {
-	return complex(0.0, 0.0)
+// Evaluate <c^{\dagger}_{k,0} c_{k,0}>.
+func GetEV_K0_K0(env *Environment, k vec.Vector) complex128 {
+	return evalEV(env, k, 1, 1)
 }
 
-func GetEV_KQ0_K0(emv *Environment, k vec.Vector) complex128 {
-	return complex(0.0, 0.0)
+// Evaluate <c^{\dagger}_{k+Q,0} c_{k,0}>.
+func GetEV_KQ0_K0(env *Environment, k vec.Vector) complex128 {
+	return evalEV(env, k, 2, 1)
 }
 
-func GetEV_K0_K1(emv *Environment, k vec.Vector) complex128 {
-	return complex(0.0, 0.0)
+// Evaluate <c^{\dagger}_{k,0} c_{k,1}>.
+func GetEV_K0_K1(env *Environment, k vec.Vector) complex128 {
+	return evalEV(env, k, 1, 3)
 }
 
-func GetEV_KQ0_K1(emv *Environment, k vec.Vector) complex128 {
-	return complex(0.0, 0.0)
+// Evaluate <c^{\dagger}_{k+Q,0} c_{k,1}>.
+func GetEV_KQ0_K1(env *Environment, k vec.Vector) complex128 {
+	return evalEV(env, k, 2, 3)
+}
+
+// Evaluate <c^{\dagger}_{indexL} c_{indexR}> where the index values have
+// the following correspondence:
+// 	1 <--> k, 0 ; 2 <--> k+Q, 0 ; 3 <--> k, 1 ; 4 <--> k+Q, 1
+func evalEV(env *Environment, k vec.Vector, indexL, indexR int) complex128 {
+	H := ElHamiltonian(env, k)
+	dim, _ := H.Dims()
+	evals, evecs := cmatrix.Eigensystem(H)
+	sum := complex(0.0, 0.0)
+	for alpha := 0; alpha < dim; alpha++ {
+		// Coefficients psi^*_{alpha} psi_{alpha}.
+		// Indices reversed relative to matrix since Eigensystem returns
+		// a slice of eigenvectors (i.e. eigenvectors in rows instead of columns).
+		// Shifted by 1 since the slice is zero-indexed.
+		left := cmplx.Conj(evecs[alpha][indexL - 1])
+		right := evecs[alpha][indexR - 1]
+		// Fermi-Dirac occupation.
+		occ := env.Fermi(evals[alpha] - env.Mu)
+		// alpha'th eigenvector contribution to EV.
+		sum += left * right * complex(occ, 0.0)
+	}
+	return sum
 }

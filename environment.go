@@ -1,5 +1,9 @@
 package vo2mft
 
+import (
+	"math"
+)
+
 // Contains parameters necessary to characterize electronic and ionic systems.
 // The order parameters M and W must be determined self-consistently.
 type Environment struct {
@@ -32,10 +36,12 @@ func (env *Environment) DeltaS() float64 {
 	return env.B + env.EpsilonM - env.EpsilonR
 }
 
+// Combined biquadratic coefficient (S_i^2 S_j^2).
 func (env *Environment) QK() float64 {
 	return 4.0*env.Ka + 2.0*env.Kc + 8.0*env.Kb
 }
 
+// Combined renormalized 'exchange' coefficient (S_i S_j) favoring dimers.
 func (env *Environment) QJ(Ds *HoppingEV) float64 {
 	Dao, Dco := Ds.Dao(env), Ds.Dco(env)
 	return 4.0*(env.Ja + env.Tao*Dao) + 2.0*(env.Jc + env.Tco*Dco)
@@ -44,4 +50,21 @@ func (env *Environment) QJ(Ds *HoppingEV) float64 {
 func (env *Environment) Qele(Ds *HoppingEV) float64 {
 	Dae, Dce, Dbe := Ds.Dae(env), Ds.Dce(env), Ds.Dbe(env)
 	return 4.0*env.Tae*Dae + 2.0*env.Tce*Dce + 8.0*env.Tbe*Dbe
+}
+
+// Fermi distribution function.
+func (env *Environment) Fermi(energy float64) float64 {
+	// Need to make this check to be sure we're dividing by a nonzero energy in the next step.
+	if energy == 0.0 {
+		return 0.5
+	}
+	// Temperature is 0 or e^(Beta*energy) is too big to calculate
+	if env.Beta == math.Inf(1) || env.Beta >= math.Abs(math.MaxFloat64/energy) || math.Abs(env.Beta*energy) >= math.Log(math.MaxFloat64) {
+		if energy <= 0 {
+			return 1.0
+		}
+		return 0.0
+	}
+	// nonzero temperature
+	return 1.0 / (math.Exp(energy*env.Beta) + 1.0)
 }

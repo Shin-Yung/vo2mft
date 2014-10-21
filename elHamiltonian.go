@@ -45,21 +45,25 @@ func ElHamiltonian(env *Environment, k vec.Vector) cmatrix.CMatrix {
 	return H
 }
 
+// Cubic axes, even symmetry (k, p; k, p)
 func EpsilonAE(env *Environment, k vec.Vector) complex128 {
 	rp := -2.0*(env.Tae*(math.Cos(k[0]) + math.Cos(k[1])) + env.Tce*math.Cos(k[2]))
 	return complex(rp, 0.0)
 }
 
+// Body diagonal, even symmetry (k, p; k, pbar)
 func EpsilonBE(env *Environment, k vec.Vector) complex128 {
 	rp := -8.0*env.Tbe*math.Cos(k[0]/2.0)*math.Cos(k[1]/2.0)*math.Cos(k[2]/2.0)
 	return complex(rp, 0.0)
 }
 
+// Cubic axes, odd symmetry (k, p; k+Q, p)
 func EpsilonAO(env *Environment, k vec.Vector) complex128 {
 	ip := -2.0*env.M*(env.Tao*(math.Sin(k[0]) + math.Sin(k[1])) + env.Tco*math.Sin(k[2]))
 	return complex(0.0, ip)
 }
 
+// Body diagonal, odd symmetry (k, p; k+Q, pbar)
 func EpsilonBO(env *Environment, k vec.Vector) complex128 {
 	rp := -8.0*env.M*env.Tbo*math.Cos(k[0]/2.0)*math.Cos(k[1]/2.0)*math.Cos(k[2]/2.0)
 	ip := 8.0*env.M*env.Tbo*math.Sin(k[0]/2.0)*math.Sin(k[1]/2.0)*math.Sin(k[2]/2.0)
