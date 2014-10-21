@@ -9,7 +9,7 @@ import (
 )
 
 // Return the absolute error and gradient of the W equation w.r.t. the given
-// variables (which should be fixed to ["M", "W"] for this case).
+// variables (which should be fixed to ["M", "W", "Mu"] for this case).
 func AbsErrorW(env *Environment, Ds *HoppingEV, variables []string) solve.Diffable {
 	F := func(v vec.Vector) (float64, error) {
 		env.Set(v, variables)
