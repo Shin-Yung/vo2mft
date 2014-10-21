@@ -2,6 +2,12 @@ package vo2mft
 
 import (
 	"math"
+	"reflect"
+	"fmt"
+)
+import (
+	"github.com/tflovorn/scExplorer/serialize"
+	vec "github.com/tflovorn/scExplorer/vector"
 )
 
 // Contains parameters necessary to characterize electronic and ionic systems.
@@ -30,6 +36,8 @@ type Environment struct {
 	Ka, Kc, Kb float64
 	// On-site energies in M and R phases.
 	EpsilonM, EpsilonR float64
+	// Hopping expectation values (calculator and cache).
+	Ds *HoppingEV
 }
 
 func (env *Environment) DeltaS() float64 {
@@ -42,14 +50,19 @@ func (env *Environment) QK() float64 {
 }
 
 // Combined renormalized 'exchange' coefficient (S_i S_j) favoring dimers.
-func (env *Environment) QJ(Ds *HoppingEV) float64 {
-	Dao, Dco := Ds.Dao(env), Ds.Dco(env)
+func (env *Environment) QJ() float64 {
+	Dao, Dco := env.Ds.Dao(env), env.Ds.Dco(env)
 	return 4.0*(env.Ja + env.Tao*Dao) + 2.0*(env.Jc + env.Tco*Dco)
 }
 
-func (env *Environment) Qele(Ds *HoppingEV) float64 {
-	Dae, Dce, Dbe := Ds.Dae(env), Ds.Dce(env), Ds.Dbe(env)
+func (env *Environment) Qele() float64 {
+	Dae, Dce, Dbe := env.Ds.Dae(env), env.Ds.Dce(env), env.Ds.Dbe(env)
 	return 4.0*env.Tae*Dae + 2.0*env.Tce*Dce + 8.0*env.Tbe*Dbe
+}
+
+func (env *Environment) Z1() float64 {
+	exp := math.Exp(-env.Beta * (env.DeltaS() - env.W*env.QK()))
+	return 1.0 + 2.0 * exp * math.Cosh(env.Beta*env.M*env.QJ())
 }
 
 // Fermi distribution function.
@@ -67,4 +80,38 @@ func (env *Environment) Fermi(energy float64) float64 {
 	}
 	// nonzero temperature
 	return 1.0 / (math.Exp(energy*env.Beta) + 1.0)
+}
+
+// Convert to string by marshalling to JSON
+func (env *Environment) String() string {
+	if env.Beta == math.Inf(1) {
+		// hack to get around JSON's choice to not allow Inf
+		env.Beta = math.MaxFloat64
+	}
+	marshalled, err := serialize.MakeJSON(env)
+	if err != nil {
+		panic(err)
+	}
+	if env.Beta == math.MaxFloat64 {
+		env.Beta = math.Inf(1)
+	}
+	return marshalled
+}
+
+// Iterate through v and vars simultaneously. vars specifies the names of
+// fields to change in env (they are set to the values given in v).
+// Panics if vars specifies a field not contained in env (or a field of
+// non-float type).
+func (env *Environment) Set(v vec.Vector, vars []string) {
+	ev := reflect.ValueOf(env).Elem()
+	for i := 0; i < len(vars); i++ {
+		field := ev.FieldByName(vars[i])
+		if field == reflect.Zero(reflect.TypeOf(env)) {
+			panic(fmt.Sprintf("Field %v not present in Environment", vars[i]))
+		}
+		if field.Type().Kind() != reflect.Float64 {
+			panic(fmt.Sprintf("Field %v is non-float", vars[i]))
+		}
+		field.SetFloat(v[i])
+	}
 }
