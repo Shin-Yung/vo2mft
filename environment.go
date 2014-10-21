@@ -36,8 +36,6 @@ type Environment struct {
 	Ka, Kc, Kb float64
 	// On-site energies in M and R phases.
 	EpsilonM, EpsilonR float64
-	// Hopping expectation values (calculator and cache).
-	Ds *HoppingEV
 }
 
 func (env *Environment) DeltaS() float64 {
@@ -50,19 +48,19 @@ func (env *Environment) QK() float64 {
 }
 
 // Combined renormalized 'exchange' coefficient (S_i S_j) favoring dimers.
-func (env *Environment) QJ() float64 {
-	Dao, Dco := env.Ds.Dao(env), env.Ds.Dco(env)
+func (env *Environment) QJ(Ds *HoppingEV) float64 {
+	Dao, Dco := Ds.Dao(env), Ds.Dco(env)
 	return 4.0*(env.Ja + env.Tao*Dao) + 2.0*(env.Jc + env.Tco*Dco)
 }
 
-func (env *Environment) Qele() float64 {
-	Dae, Dce, Dbe := env.Ds.Dae(env), env.Ds.Dce(env), env.Ds.Dbe(env)
+func (env *Environment) Qele(Ds *HoppingEV) float64 {
+	Dae, Dce, Dbe := Ds.Dae(env), Ds.Dce(env), Ds.Dbe(env)
 	return 4.0*env.Tae*Dae + 2.0*env.Tce*Dce + 8.0*env.Tbe*Dbe
 }
 
-func (env *Environment) Z1() float64 {
+func (env *Environment) Z1(Ds *HoppingEV) float64 {
 	exp := math.Exp(-env.Beta * (env.DeltaS() - env.W*env.QK()))
-	return 1.0 + 2.0 * exp * math.Cosh(env.Beta*env.M*env.QJ())
+	return 1.0 + 2.0 * exp * math.Cosh(env.Beta*env.M*env.QJ(Ds))
 }
 
 // Fermi distribution function.
