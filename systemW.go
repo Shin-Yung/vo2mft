@@ -14,7 +14,7 @@ func AbsErrorW(env *Environment, Ds *HoppingEV, variables []string) solve.Diffab
 	F := func(v vec.Vector) (float64, error) {
 		env.Set(v, variables)
 		exp := math.Exp(-env.Beta * (env.DeltaS() - env.W*env.QK()))
-		lhs := env.M
+		lhs := env.W
 		rhs := 2.0 * exp * math.Cosh(env.Beta*env.M*env.QJ(Ds)) / env.Z1(Ds)
 		return lhs - rhs, nil
 	}
