@@ -80,6 +80,18 @@ func (env *Environment) Fermi(energy float64) float64 {
 	return 1.0 / (math.Exp(energy*env.Beta) + 1.0)
 }
 
+// Create an Environment from the given serialized data.
+func NewEnvironment(jsonData string) (*Environment, error) {
+        // initialize env with input data
+        env := new(Environment)
+        err := serialize.CopyFromJSON(jsonData, env)
+        if err != nil {
+                return nil, err
+        }
+
+        return env, nil
+}
+
 // Convert to string by marshalling to JSON
 func (env *Environment) String() string {
 	if env.Beta == math.Inf(1) {
