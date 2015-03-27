@@ -1,0 +1,37 @@
+[M, W, Mu]
+
+beta = 0.1
+[9.470297329497607e-15 0.6608640711843444 -19.579979973739814]
+
+beta = 10.0
+[1.4994719946534618e-08 0.1293347796427838 -2.2815353187816467]
+
+beta = 100.0
+[0.09448046998780664 0.09448046998780664 -2.2893491844040335]
+
+--- H -> 2H, add mu to H, remove mu from systemMu
+
+beta = 0.1
+[-8.316046487242477e-14 0.6608640711841838 -11.274023907915838]
+
+beta = 100.0
+[0.09444285342293215 0.09444285342293547 -1.5065397455119258]
+
+This is *consistent* with expected behavior:
+    m ~ "sublattice magnetization": finite at low temperature, vanishes at high temperature.
+    Keep finite w at high temperature to increase entropy.
+        Why is it increasing with temperature? - entropy contribution?
+    mu becomes more negative with increasing temperature.
+
+--- Also remove mu from hoppingEV
+
+beta = 0.1
+[-8.299362789637282e-14 0.6608640711841844 -11.274023907916234]
+
+beta = 100.0
+[0.09412398701519993 0.09412398701519993 -1.5065255949578846]
+
+--- Start with mu = 1.0 instead of mu = -1.0
+
+beta = 100.0
+[0.09412397132384641 0.09412397132384644 -1.5065228553746846]

@@ -26,9 +26,9 @@ type HoppingEV struct {
 }
 
 func (Ds *HoppingEV) Dae(env *Environment) float64 {
-	if Ds.init_dae && (env.M == Ds.m_dae) {
-		return Ds.dae
-	}
+	//if Ds.init_dae && (env.M == Ds.m_dae) {
+	//	return Ds.dae
+	//}
 
 	inner := func(k vec.Vector) float64 {
 		ev := GetEV_K0_K0(env, k)
@@ -39,7 +39,8 @@ func (Ds *HoppingEV) Dae(env *Environment) float64 {
 		//}
 		return 4.0*math.Cos(k[0])*real(ev)
 	}
-	dae := bzone.Avg(env.BZPointsPerDim, 3, inner)
+	//dae := bzone.Avg(env.BZPointsPerDim, 3, inner)
+	dae := 0.5*bzone.Avg(env.BZPointsPerDim, 3, inner)
 	println("Dae", dae)
 
 	inner_im := func(k vec.Vector) float64 {
@@ -58,9 +59,9 @@ func (Ds *HoppingEV) Dae(env *Environment) float64 {
 }
 
 func (Ds *HoppingEV) Dce(env *Environment) float64 {
-	if Ds.init_dce && (env.M == Ds.m_dce) {
-		return Ds.dce
-	}
+	//if Ds.init_dce && (env.M == Ds.m_dce) {
+	//	return Ds.dce
+	//}
 
 	inner := func(k vec.Vector) float64 {
 		ev := GetEV_K0_K0(env, k)
@@ -71,7 +72,8 @@ func (Ds *HoppingEV) Dce(env *Environment) float64 {
 		//}
 		return 4.0*math.Cos(k[2])*real(ev)
 	}
-	dce := bzone.Avg(env.BZPointsPerDim, 3, inner)
+	//dce := bzone.Avg(env.BZPointsPerDim, 3, inner)
+	dce := 0.5*bzone.Avg(env.BZPointsPerDim, 3, inner)
 	println("Dce", dce)
 
 	inner_im := func(k vec.Vector) float64 {
@@ -90,16 +92,17 @@ func (Ds *HoppingEV) Dce(env *Environment) float64 {
 }
 
 func (Ds *HoppingEV) Dbe(env *Environment) float64 {
-	if Ds.init_dbe && (env.M == Ds.m_dbe) {
-		return Ds.dbe
-	}
+	//if Ds.init_dbe && (env.M == Ds.m_dbe) {
+	//	return Ds.dbe
+	//}
 
 	inner := func(k vec.Vector) float64 {
 		ev := GetEV_K0_K1(env, k)
 		//println("Dbe", ev)
 		return 2.0*real(ev + cmplx.Conj(ev))
 	}
-	dbe := bzone.Avg(env.BZPointsPerDim, 3, inner)
+	//dbe := bzone.Avg(env.BZPointsPerDim, 3, inner)
+	dbe := 0.5*bzone.Avg(env.BZPointsPerDim, 3, inner)
 	println("Dbe", dbe)
 
 	Ds.init_dbe = true
@@ -123,7 +126,8 @@ func (Ds *HoppingEV) Dao(env *Environment) float64 {
 		// 2i * ev = -2 * imag(ev)
 		return -2.0*math.Sin(k[0])*imag(ev)
 	}
-	dao := bzone.Avg(env.BZPointsPerDim, 3, inner)
+	//dao := bzone.Avg(env.BZPointsPerDim, 3, inner)
+	dao := 0.5*bzone.Avg(env.BZPointsPerDim, 3, inner)
 	println("Dao_M, W, Mu:", env.M, env.W, env.Mu)
 	println("Dao", dao)
 
@@ -158,7 +162,8 @@ func (Ds *HoppingEV) Dco(env *Environment) float64 {
 		// 2i * ev = -2 * imag(ev)
 		return -2.0*math.Sin(k[2])*imag(ev)
 	}
-	dco := bzone.Avg(env.BZPointsPerDim, 3, inner)
+	//dco := bzone.Avg(env.BZPointsPerDim, 3, inner)
+	dco := 0.5*bzone.Avg(env.BZPointsPerDim, 3, inner)
 	println("Dco", dco)
 
 	inner_re := func(k vec.Vector) float64 {
@@ -177,16 +182,17 @@ func (Ds *HoppingEV) Dco(env *Environment) float64 {
 }
 
 func (Ds *HoppingEV) Dbo(env *Environment) float64 {
-	if Ds.init_dbo && (env.M == Ds.m_dbo) {
-		return Ds.dbo
-	}
+	//if Ds.init_dbo && (env.M == Ds.m_dbo) {
+	//	return Ds.dbo
+	//}
 
 	inner := func(k vec.Vector) float64 {
 		ev := GetEV_KQ0_K1(env, k)
 		//println("Dbo", ev)
 		return real(ev + cmplx.Conj(ev))
 	}
-	dbo := bzone.Avg(env.BZPointsPerDim, 3, inner)
+	//dbo := bzone.Avg(env.BZPointsPerDim, 3, inner)
+	dbo := 0.5*bzone.Avg(env.BZPointsPerDim, 3, inner)
 	println("Dbo", dbo)
 
 	Ds.init_dbo = true
@@ -232,7 +238,8 @@ func evalEV(env *Environment, k vec.Vector, indexL, indexR int) complex128 {
 		left := cmplx.Conj(evecs[alpha][indexL - 1])
 		right := evecs[alpha][indexR - 1]
 		// Fermi-Dirac occupation.
-		occ := env.Fermi(evals[alpha] - env.Mu)
+		occ := env.Fermi(evals[alpha])
+		//occ := env.Fermi(evals[alpha] - env.Mu)
 		// alpha'th eigenvector contribution to EV.
 		sum += left * right * complex(occ, 0.0)
 	}
