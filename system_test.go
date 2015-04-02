@@ -12,7 +12,7 @@ import (
 func TestSolveSystem(t *testing.T) {
 	solve.DebugReport(true)
 
-	env, err := defaultEnv()
+	env, err := loadEnv("system_test_env.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -25,8 +25,24 @@ func TestSolveSystem(t *testing.T) {
 	fmt.Println(result)
 }
 
-func defaultEnv() (*Environment, error) {
-        data, err := ioutil.ReadFile("system_test_env.json")
+func TestSolveSystemIons(t *testing.T) {
+	solve.DebugReport(true)
+
+	env, err := loadEnv("system_test_env_ions.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	Ds := new(HoppingEV)
+	eps := 1e-6
+	result, err := MWSolve(env, Ds, eps, eps)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(result)
+}
+
+func loadEnv(envFilePath string) (*Environment, error) {
+        data, err := ioutil.ReadFile(envFilePath)
         if err != nil {
                 return nil, err
         }

@@ -24,6 +24,15 @@ func MWSystem(env *Environment, Ds *HoppingEV) (solve.DiffSystem, []float64) {
 	return system, start
 }
 
+func MWSolve(env *Environment, Ds *HoppingEV, epsAbs, epsRel float64) (vec.Vector, error) {
+	system, start := MWSystem(env, Ds)
+	solution, err := solve.MultiDim(system, start, epsAbs, epsRel)
+	if err != nil {
+		return nil, err
+	}
+	return solution, nil
+}
+
 func MuSystem(env *Environment) (solve.DiffSystem, []float64) {
 	variables := []string{"Mu"}
 	diffMu := AbsErrorMu(env, variables)
