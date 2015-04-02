@@ -29,6 +29,9 @@ func (Ds *HoppingEV) Dae(env *Environment) float64 {
 	//if Ds.init_dae && (env.M == Ds.m_dae) {
 	//	return Ds.dae
 	//}
+	if !env.FiniteHoppings() {
+		return 0.0
+	}
 
 	inner := func(k vec.Vector) float64 {
 		ev := GetEV_K0_K0(env, k)
@@ -62,6 +65,9 @@ func (Ds *HoppingEV) Dce(env *Environment) float64 {
 	//if Ds.init_dce && (env.M == Ds.m_dce) {
 	//	return Ds.dce
 	//}
+	if !env.FiniteHoppings() {
+		return 0.0
+	}
 
 	inner := func(k vec.Vector) float64 {
 		ev := GetEV_K0_K0(env, k)
@@ -95,6 +101,9 @@ func (Ds *HoppingEV) Dbe(env *Environment) float64 {
 	//if Ds.init_dbe && (env.M == Ds.m_dbe) {
 	//	return Ds.dbe
 	//}
+	if !env.FiniteHoppings() {
+		return 0.0
+	}
 
 	inner := func(k vec.Vector) float64 {
 		ev := GetEV_K0_K1(env, k)
@@ -115,6 +124,9 @@ func (Ds *HoppingEV) Dao(env *Environment) float64 {
 	//if Ds.init_dao && (env.M == Ds.m_dao) {
 	//	return Ds.dao
 	//}
+	if !env.FiniteHoppings() {
+		return 0.0
+	}
 
 	inner := func(k vec.Vector) float64 {
 		ev := GetEV_KQ0_K0(env, k)
@@ -151,6 +163,9 @@ func (Ds *HoppingEV) Dco(env *Environment) float64 {
 	//if Ds.init_dco && (env.M == Ds.m_dco) {
 	//	return Ds.dco
 	//}
+	if !env.FiniteHoppings() {
+		return 0.0
+	}
 
 	inner := func(k vec.Vector) float64 {
 		ev := GetEV_KQ0_K0(env, k)
@@ -185,6 +200,9 @@ func (Ds *HoppingEV) Dbo(env *Environment) float64 {
 	//if Ds.init_dbo && (env.M == Ds.m_dbo) {
 	//	return Ds.dbo
 	//}
+	if !env.FiniteHoppings() {
+		return 0.0
+	}
 
 	inner := func(k vec.Vector) float64 {
 		ev := GetEV_KQ0_K1(env, k)

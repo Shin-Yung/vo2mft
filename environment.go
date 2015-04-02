@@ -63,6 +63,15 @@ func (env *Environment) Z1(Ds *HoppingEV) float64 {
 	return 1.0 + 2.0 * exp * math.Cosh(env.Beta*env.M*env.QJ(Ds))
 }
 
+// Are electronic hopping finite?
+// If not, don't need to calculate D's.
+func (env *Environment) FiniteHoppings() bool {
+	eps := 1e-9
+	even := (math.Abs(env.Tae) > eps) || (math.Abs(env.Tce) > eps) || (math.Abs(env.Tbe) > eps)
+	odd := (math.Abs(env.Tao) > eps) || (math.Abs(env.Tco) > eps) || (math.Abs(env.Tbo) > eps)
+	return even || odd
+}
+
 // Fermi distribution function.
 func (env *Environment) Fermi(energy float64) float64 {
 	// Need to make this check to be sure we're dividing by a nonzero energy in the next step.
