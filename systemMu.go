@@ -1,10 +1,10 @@
 package vo2mft
 
 import (
+	"github.com/tflovorn/cmatrix"
+	"github.com/tflovorn/scExplorer/bzone"
 	"github.com/tflovorn/scExplorer/solve"
 	vec "github.com/tflovorn/scExplorer/vector"
-	"github.com/tflovorn/scExplorer/bzone"
-	"github.com/tflovorn/cmatrix"
 )
 
 // Return the absolute error and gradient of the Mu equation w.r.t. the given
@@ -19,8 +19,8 @@ func AbsErrorMu(env *Environment, variables []string) solve.Diffable {
 		lhs := 1.0
 		//rhs := bzone.Avg(L, 3, innerClosure)
 		rhs := 0.5 * bzone.Avg(L, 3, innerClosure)
-		println("Mu:", env.Mu)
-		println("Mu lhs - rhs:", lhs - rhs)
+		//println("Mu:", env.Mu)
+		//println("Mu lhs - rhs:", lhs - rhs)
 		return lhs - rhs, nil
 	}
 	h := 1e-6
