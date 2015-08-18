@@ -1,6 +1,7 @@
 package vo2solve
 
 import (
+	"encoding/json"
 	"math"
 	"math/cmplx"
 )
@@ -217,6 +218,28 @@ func (Ds *HoppingEV) Dbo(env *Environment) float64 {
 	Ds.m_dbo = env.M
 	Ds.dbo = dbo
 	return dbo
+}
+
+// Convert to string by marshalling to JSON.
+// Leave out internal cache data.
+func (Ds *HoppingEV) StringEnv(env *Environment) string {
+	marshalled := Ds.MarshalEnv(env)
+	return marshalled
+}
+
+func (Ds *HoppingEV) MarshalEnv(env *Environment) string {
+	repr := make(map[string]float64)
+	repr["Dae"] = Ds.Dae(env)
+	repr["Dce"] = Ds.Dce(env)
+	repr["Dbe"] = Ds.Dbe(env)
+	repr["Dao"] = Ds.Dao(env)
+	repr["Dco"] = Ds.Dco(env)
+	repr["Dbo"] = Ds.Dbo(env)
+	marshalled, err := json.Marshal(repr)
+	if err != nil {
+		panic(err)
+	}
+	return string(marshalled)
 }
 
 // Evaluate <c^{\dagger}_{k,0} c_{k,0}>.
