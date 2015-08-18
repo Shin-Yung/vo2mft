@@ -1,9 +1,9 @@
 package vo2mft
 
 import (
+	"fmt"
 	"math"
 	"reflect"
-	"fmt"
 )
 import (
 	"github.com/tflovorn/scExplorer/serialize"
@@ -50,7 +50,7 @@ func (env *Environment) QK() float64 {
 // Combined renormalized 'exchange' coefficient (S_i S_j) favoring dimers.
 func (env *Environment) QJ(Ds *HoppingEV) float64 {
 	Dao, Dco := Ds.Dao(env), Ds.Dco(env)
-	return 4.0*(env.Ja + env.Tao*Dao) + 2.0*(env.Jc + env.Tco*Dco)
+	return 4.0*(env.Ja+env.Tao*Dao) + 2.0*(env.Jc+env.Tco*Dco)
 }
 
 func (env *Environment) Qele(Ds *HoppingEV) float64 {
@@ -60,7 +60,7 @@ func (env *Environment) Qele(Ds *HoppingEV) float64 {
 
 func (env *Environment) Z1(Ds *HoppingEV) float64 {
 	exp := math.Exp(-env.Beta * (env.DeltaS() - env.W*env.QK()))
-	return 1.0 + 2.0 * exp * math.Cosh(env.Beta*env.M*env.QJ(Ds))
+	return 1.0 + 2.0*exp*math.Cosh(env.Beta*env.M*env.QJ(Ds))
 }
 
 // Are electronic hopping finite?
@@ -91,14 +91,14 @@ func (env *Environment) Fermi(energy float64) float64 {
 
 // Create an Environment from the given serialized data.
 func NewEnvironment(jsonData string) (*Environment, error) {
-        // initialize env with input data
-        env := new(Environment)
-        err := serialize.CopyFromJSON(jsonData, env)
-        if err != nil {
-                return nil, err
-        }
+	// initialize env with input data
+	env := new(Environment)
+	err := serialize.CopyFromJSON(jsonData, env)
+	if err != nil {
+		return nil, err
+	}
 
-        return env, nil
+	return env, nil
 }
 
 // Convert to string by marshalling to JSON
