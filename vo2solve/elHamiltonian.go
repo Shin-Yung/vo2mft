@@ -1,4 +1,4 @@
-package vo2mft
+package vo2solve
 
 import (
 	"math"
