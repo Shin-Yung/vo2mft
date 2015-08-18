@@ -2,6 +2,7 @@ package vo2solve
 
 import (
 	"fmt"
+	"io/ioutil"
 	"math"
 	"reflect"
 )
@@ -101,8 +102,26 @@ func NewEnvironment(jsonData string) (*Environment, error) {
 	return env, nil
 }
 
+// Load an Environment from the JSON file at envFilePath.
+func LoadEnv(envFilePath string) (*Environment, error) {
+	data, err := ioutil.ReadFile(envFilePath)
+	if err != nil {
+		return nil, err
+	}
+	env, err := NewEnvironment(string(data))
+	if err != nil {
+		return nil, err
+	}
+	return env, nil
+}
+
 // Convert to string by marshalling to JSON
 func (env *Environment) String() string {
+	marshalled := env.Marshal()
+	return marshalled
+}
+
+func (env *Environment) Marshal() string {
 	if env.Beta == math.Inf(1) {
 		// hack to get around JSON's choice to not allow Inf
 		env.Beta = math.MaxFloat64

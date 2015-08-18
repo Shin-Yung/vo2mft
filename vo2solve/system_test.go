@@ -2,7 +2,6 @@ package vo2solve
 
 import (
 	"fmt"
-	"io/ioutil"
 	"math"
 	"testing"
 )
@@ -47,7 +46,7 @@ func TestRegressionSolveSystem(t *testing.T) {
 		// Start with fresh env and Ds.
 		// (Ds assumes that only M/W/Mu in env are changing - need to reinitialize it
 		// when we change Beta).
-		env, err := loadEnv("system_test_regression_env.json")
+		env, err := LoadEnv("system_test_regression_env.json")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -96,7 +95,7 @@ func diff_float(x, y float64) bool {
 func TestSolveSystem(t *testing.T) {
 	solve.DebugReport(true)
 
-	env, err := loadEnv("system_test_env.json")
+	env, err := LoadEnv("system_test_env.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -112,7 +111,7 @@ func TestSolveSystem(t *testing.T) {
 func TestSolveSystemIons(t *testing.T) {
 	solve.DebugReport(true)
 
-	env, err := loadEnv("system_test_env_ions.json")
+	env, err := LoadEnv("system_test_env_ions.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -123,16 +122,4 @@ func TestSolveSystemIons(t *testing.T) {
 		t.Fatal(err)
 	}
 	fmt.Println(result)
-}
-
-func loadEnv(envFilePath string) (*Environment, error) {
-	data, err := ioutil.ReadFile(envFilePath)
-	if err != nil {
-		return nil, err
-	}
-	env, err := NewEnvironment(string(data))
-	if err != nil {
-		return nil, err
-	}
-	return env, nil
 }
