@@ -12,7 +12,8 @@ import (
 )
 
 // Contains parameters necessary to characterize electronic and ionic systems.
-// The order parameters M and W must be determined self-consistently.
+// The ionic order parameters M and W and the electronic chemical potential Mu
+// must be determined self-consistently.
 type Environment struct {
 	// Size of BZ on one edge (total number of BZ points is this cubed).
 	BZPointsPerDim int
@@ -37,6 +38,14 @@ type Environment struct {
 	Ka, Kc, Kb float64
 	// On-site energies in M and R phases.
 	EpsilonM, EpsilonR float64
+}
+
+// Environment with all self-consistent values converged.
+// Includes additional data for exporting to outside programs.
+type FinalEnvironment struct {
+	Environment
+	Dae, Dce, Dbe, Dao, Dco, Dbo float64
+	FreeEnergy                   float64
 }
 
 func (env *Environment) DeltaS() float64 {
@@ -102,6 +111,20 @@ func NewEnvironment(jsonData string) (*Environment, error) {
 	return env, nil
 }
 
+// Create a FinalEnvironment from the given solved Environment and associated
+// HoppingEV.
+func NewFinalEnvironment(env *Environment, Ds *HoppingEV) *FinalEnvironment {
+	Dae := Ds.Dae(env)
+	Dce := Ds.Dce(env)
+	Dbe := Ds.Dbe(env)
+	Dao := Ds.Dao(env)
+	Dco := Ds.Dco(env)
+	Dbo := Ds.Dbo(env)
+	FreeEnergy := 0.0 // TODO
+	fenv := FinalEnvironment{*env, Dae, Dce, Dbe, Dao, Dco, Dbo, FreeEnergy}
+	return &fenv
+}
+
 // Load an Environment from the JSON file at envFilePath.
 func LoadEnv(envFilePath string) (*Environment, error) {
 	data, err := ioutil.ReadFile(envFilePath)
@@ -122,6 +145,26 @@ func (env *Environment) String() string {
 }
 
 func (env *Environment) Marshal() string {
+	if env.Beta == math.Inf(1) {
+		// hack to get around JSON's choice to not allow Inf
+		env.Beta = math.MaxFloat64
+	}
+	marshalled, err := serialize.MakeJSON(env)
+	if err != nil {
+		panic(err)
+	}
+	if env.Beta == math.MaxFloat64 {
+		env.Beta = math.Inf(1)
+	}
+	return marshalled
+}
+
+func (env *FinalEnvironment) String() string {
+	marshalled := env.Marshal()
+	return marshalled
+}
+
+func (env *FinalEnvironment) Marshal() string {
 	if env.Beta == math.Inf(1) {
 		// hack to get around JSON's choice to not allow Inf
 		env.Beta = math.MaxFloat64
