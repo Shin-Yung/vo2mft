@@ -14,27 +14,29 @@ def ElHamiltonian(env, k):
     EpsBO = EpsilonBO(env, k)
     ikd = complex(0.0, k[0]/2.0+k[1]/2.0+k[2]/2.0)
     mu = complex(env["Mu"], 0.0)
+    ident_part = complex((1.0-env.W)*env.EpsilonR+env.W*env.EpsilonM, 0.0) - mu
 
     H = np.zeros((4, 4), dtype=np.complex128)
-    H[0, 0] = EpsAE - mu
+
+    H[0, 0] = EpsAE + ident_part
     H[1, 0] = 2.0 * EpsAO
     H[2, 0] = EpsBE * np.exp(-ikd)
     H[3, 0] = -cmplx.Conj(EpsBO) * np.exp(-ikd)
 
     H[0, 1] = -2.0 * EpsAO
-    H[1, 1] = -EpsAE - mu
+    H[1, 1] = -EpsAE + ident_part
     H[2, 1] = cmplx.Conj(EpsBO) * np.exp(-ikd)
     H[3, 1] = complex(0.0, 1.0) * EpsBE_KQ * np.exp(-ikd)
 
     H[0, 2] = EpsBE * np.exp(ikd)
     H[1, 2] = EpsBO * np.exp(ikd)
-    H[2, 2] = EpsAE - mu
+    H[2, 2] = EpsAE + ident_part
     H[3, 2] = 2.0 * EpsAO
 
     H[0, 3] = -EpsBO * np.exp(ikd)
     H[1, 3] = complex(0.0, -1.0) * EpsBE_KQ * np.exp(ikd)
     H[2, 3] = -2.0 * EpsAO
-    H[3, 3] = -EpsAE - mu
+    H[3, 3] = -EpsAE + ident_part
 
     return H
 
