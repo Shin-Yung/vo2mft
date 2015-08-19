@@ -2,7 +2,7 @@ from argparse import ArgumentParser
 import os
 
 def _main():
-    parser = ArgumentParser(description="Set up defaults")
+    parser = ArgumentParser(description="Set up config")
     parser.add_argument('--base_path', type=str, default=None,
             help="vo2mft base path (above vo2mft and vo2solve directories)")
     args = parser.parse_args()
@@ -14,15 +14,15 @@ def _main():
         dir_up = os.path.join(pwd, '..')
         base_path = os.path.abspath(dir_up)
 
-    defaults = {'base_path': base_path}
+    config = {'base_path': base_path}
 
-    defaults_path = os.path.join(base_path, 'vo2mft', 'defaults')
+    config_path = os.path.join(base_path, 'vo2mft', 'config')
 
-    with open(defaults_path, 'w') as fp:
-        for k, v in defaults.items():
+    with open(config_path, 'w') as fp:
+        for k, v in config.items():
             fp.write("{} {}\n".format(k, v))
 
-    print("defaults file written.")
+    print("config file written.")
 
 if __name__ == "__main__":
     _main()
