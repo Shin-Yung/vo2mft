@@ -1,6 +1,7 @@
 package vo2solve
 
 import (
+	"flag"
 	"fmt"
 	"math"
 	"testing"
@@ -9,7 +10,11 @@ import (
 	"github.com/tflovorn/scExplorer/solve"
 )
 
+var regression_vals = flag.Bool("regression_vals", false, "Run all regression tests, printing output without checking for errors")
+
 func TestRegressionSolveSystem(t *testing.T) {
+	flag.Parse()
+
 	// Initial conditions: M = 1.0; W = 1.0.
 	// Beta = 100.0, 10.0, and 0.1.
 	// expected_result = [m, w, mu]; expected_Ds = [Dao, Dco].
@@ -53,7 +58,7 @@ func TestRegressionSolveSystem(t *testing.T) {
 		Ds := new(HoppingEV)
 
 		// Set variables for this test.
-		setup, expected := all_setup[i], all_expected[i]
+		setup := all_setup[i]
 		for k, v := range setup {
 			env.Set([]float64{v}, []string{k})
 		}
@@ -68,21 +73,24 @@ func TestRegressionSolveSystem(t *testing.T) {
 		this_Dao := Ds.Dao(env)
 		this_Dco := Ds.Dco(env)
 
-		//fmt.Println("result = ", result)
-		//fmt.Println("Dao = ", this_Dao)
-		//fmt.Println("Dco = ", this_Dco)
-
-		// Check results.
-		if diff_float(result[0], expected[0][0]) {
-			t.Fatalf("Incorrect M = %f; expected %f.", result[0], expected[0][0])
-		} else if diff_float(result[1], expected[0][1]) {
-			t.Fatalf("Incorrect W = %f; expected %f.", result[1], expected[0][1])
-		} else if diff_float(result[2], expected[0][2]) {
-			t.Fatalf("Incorrect Mu = %f; expected %f.", result[2], expected[0][2])
-		} else if diff_float(this_Dao, expected[1][0]) {
-			t.Fatalf("Incorrect Dao = %f; expected %f.", this_Dao, expected[1][0])
-		} else if diff_float(this_Dco, expected[1][1]) {
-			t.Fatalf("Incorrect Dco = %f; expected %f.", this_Dco, expected[1][1])
+		if *regression_vals {
+			fmt.Println("result = ", result)
+			fmt.Println("Dao = ", this_Dao)
+			fmt.Println("Dco = ", this_Dco)
+		} else {
+			// Check results.
+			expected := all_expected[i]
+			if diff_float(result[0], expected[0][0]) {
+				t.Fatalf("Incorrect M = %f; expected %f.", result[0], expected[0][0])
+			} else if diff_float(result[1], expected[0][1]) {
+				t.Fatalf("Incorrect W = %f; expected %f.", result[1], expected[0][1])
+			} else if diff_float(result[2], expected[0][2]) {
+				t.Fatalf("Incorrect Mu = %f; expected %f.", result[2], expected[0][2])
+			} else if diff_float(this_Dao, expected[1][0]) {
+				t.Fatalf("Incorrect Dao = %f; expected %f.", this_Dao, expected[1][0])
+			} else if diff_float(this_Dco, expected[1][1]) {
+				t.Fatalf("Incorrect Dco = %f; expected %f.", this_Dco, expected[1][1])
+			}
 		}
 	}
 }
