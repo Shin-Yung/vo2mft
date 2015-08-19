@@ -38,12 +38,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Write output system.
-	env_out_buf := bytes.NewBufferString(env.Marshal())
-	env_out_data := env_out_buf.Bytes()
-	ioutil.WriteFile(out_path+"_env.json", env_out_data, 0644) // u=rw;go=r
+	// Calculate additional data for export from solved Environment.
+	fenv := vo2solve.NewFinalEnvironment(env, Ds)
 
-	Ds_out_buf := bytes.NewBufferString(Ds.MarshalEnv(env))
-	Ds_out_data := Ds_out_buf.Bytes()
-	ioutil.WriteFile(out_path+"_Ds.json", Ds_out_data, 0644) // u=rw;go=r
+	// Write output system.
+	fenv_out_buf := bytes.NewBufferString(fenv.Marshal())
+	fenv_out_data := fenv_out_buf.Bytes()
+	ioutil.WriteFile(out_path+"_fenv.json", fenv_out_data, 0644) // u=rw;go=r
 }
