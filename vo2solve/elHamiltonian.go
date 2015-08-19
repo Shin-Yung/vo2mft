@@ -13,7 +13,7 @@ import (
 // Assumes that k is scaled such that kx*a, ky*a, kz*c --> kx, ky, kz.
 func ElHamiltonian(env *Environment, k vec.Vector) cmatrix.CMatrix {
 	KQ := vec.Vector{math.Pi, math.Pi, math.Pi}
-	k.Add(&KQ) // now KQ = k dot Q
+	k.Add(&KQ) // now KQ = k + Q
 
 	EpsAE := EpsilonAE(env, k)
 	EpsBE := EpsilonBE(env, k)
