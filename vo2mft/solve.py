@@ -4,17 +4,16 @@ import json
 from uuid import uuid4
 from vo2mft.util import _solve_front_path
 
-def solve(env, eps=None):
+def solve(env, eps=1e-6):
+    '''Return the solved final env corresponding to the given env, solved to
+    accuracy given by eps.
+    '''
     solver_path = _solve_front_path()
     in_path, out_path = str(uuid4()), str(uuid4())
 
     write_env_file(env, in_path)
 
-    solver_call = None
-    if eps != None:
-        solver_call = [solver_path, "--eps", str(eps), in_path, out_path]
-    else:
-        solver_call = [solver_path, "--eps", str(eps), in_path, out_path]
+    solver_call = [solver_path, "--eps", str(eps), in_path, out_path]
     subprocess.call(solver_call)
 
     final_env_path = out_path + "_fenv.json"
@@ -22,6 +21,17 @@ def solve(env, eps=None):
     os.remove(in_path)
     os.remove(final_env_path)
     return final_env
+
+def solve_set(envs, eps=1e-6):
+    '''Return a list of solved final envs corresponding to the given list of
+    envs, solved to accuracy given by eps.
+    '''
+    # TODO - can parallelize this by calling multiple solver processes.
+    final_envs = []
+    for initial_env in envs:
+        this_final_env = solve(initial_env, eps)
+        final_envs.append(this_final_env)
+    return final_envs
 
 def write_env_file(env, env_path):
     env_str = json.dumps(env)
