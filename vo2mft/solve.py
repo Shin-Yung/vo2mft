@@ -1,0 +1,36 @@
+import subprocess
+import os
+import json
+from uuid import uuid4
+from vo2mft.util import _solve_front_path
+
+def solve(env, eps=None):
+    solver_path = _solve_front_path()
+    in_path, out_path = str(uuid4()), str(uuid4())
+
+    write_env_file(env, in_path)
+
+    solver_call = None
+    if eps != None:
+        solver_call = [solver_path, "--eps", str(eps), in_path, out_path]
+    else:
+        solver_call = [solver_path, "--eps", str(eps), in_path, out_path]
+    subprocess.call(solver_call)
+
+    final_env_path = out_path + "_fenv.json"
+    final_env = read_env_file(final_env_path)
+    os.remove(in_path)
+    os.remove(final_env_path)
+    return final_env
+
+def write_env_file(env, env_path):
+    env_str = json.dumps(env)
+    with open(env_path, 'w') as fp:
+        fp.write(env_str)
+
+def read_env_file(env_path):
+    env = None
+    with open(env_path, 'r') as fp:
+        env_str = fp.read()
+        env = json.loads(env_str)
+    return env
