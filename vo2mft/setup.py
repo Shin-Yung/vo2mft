@@ -9,14 +9,14 @@ def _main():
 
     base_path = args.base_path
     if args.base_path == None:
-        print("base_path not specified; assuming it is two directories up from pwd.")
+        print("base_path not specified; assuming it is one directory up from pwd.")
         pwd = os.getcwd()
-        dir_up = os.path.join(pwd, '..', '..')
+        dir_up = os.path.join(pwd, '..')
         base_path = os.path.abspath(dir_up)
 
     defaults = {'base_path': base_path}
 
-    defaults_path = os.path.join(base_path, 'vo2mft', 'front', 'defaults')
+    defaults_path = os.path.join(base_path, 'vo2mft', 'defaults')
 
     with open(defaults_path, 'w') as fp:
         for k, v in defaults.items():
