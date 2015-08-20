@@ -7,6 +7,8 @@ import (
 	"reflect"
 )
 import (
+	"github.com/tflovorn/cmatrix"
+	"github.com/tflovorn/scExplorer/bzone"
 	"github.com/tflovorn/scExplorer/serialize"
 	vec "github.com/tflovorn/scExplorer/vector"
 )
@@ -64,6 +66,7 @@ func (env *Environment) QJ(Ds *HoppingEV) float64 {
 }
 
 func (env *Environment) Qele(Ds *HoppingEV) float64 {
+	// TODO - make sure T's here should be even part.
 	Dae, Dce, Dbe := Ds.Dae(env), Ds.Dce(env), Ds.Dbe(env)
 	return 4.0*env.Tae*Dae + 2.0*env.Tce*Dce + 8.0*env.Tbe*Dbe
 }
@@ -99,6 +102,45 @@ func (env *Environment) Fermi(energy float64) float64 {
 	return 1.0 / (math.Exp(energy*env.Beta) + 1.0)
 }
 
+// Free energy value.
+// Points on the phase diagram include the state with minimum free energy
+// (may not reach this state, depending on initial conditions).
+func (env *Environment) FreeEnergy(Ds *HoppingEV) float64 {
+	// TODO - check correctness of interaction_part.
+	interaction_part := env.QJ(Ds)*math.Pow(env.M, 2.0) + env.QK()*math.Pow(env.W, 2.0) + env.Qele(Ds)
+
+	return env.FreeEnergyIons(Ds) + env.FreeEnergyElectrons() + interaction_part
+}
+
+func (env *Environment) FreeEnergyIons(Ds *HoppingEV) float64 {
+	T := 1.0 / env.Beta
+	return -T * math.Log(env.Z1(Ds))
+}
+
+func (env *Environment) FreeEnergyElectrons() float64 {
+	inner := func(k vec.Vector) float64 {
+		H := ElHamiltonian(env, k)
+		dim, _ := H.Dims()
+		evals, _ := cmatrix.Eigensystem(H)
+		sum := 0.0
+		for alpha := 0; alpha < dim; alpha++ {
+			eps_ka := evals[alpha]
+			// Mu excluded from exp argument here since it is
+			// included in H.
+			val := 1.0 + math.Exp(-env.Beta*eps_ka)
+			sum += 2.0 * math.Log(val)
+		}
+		return sum
+	}
+	L := env.BZPointsPerDim
+	T := 1.0 / env.Beta
+	band_part := -T * bzone.Avg(L, 3, inner)
+	n := 1.0
+	mu_part := 2.0 * env.Mu * n
+
+	return band_part + mu_part
+}
+
 // Create an Environment from the given serialized data.
 func NewEnvironment(jsonData string) (*Environment, error) {
 	// initialize env with input data
@@ -120,7 +162,7 @@ func NewFinalEnvironment(env *Environment, Ds *HoppingEV) *FinalEnvironment {
 	Dao := Ds.Dao(env)
 	Dco := Ds.Dco(env)
 	Dbo := Ds.Dbo(env)
-	FreeEnergy := 0.0 // TODO
+	FreeEnergy := env.FreeEnergy(Ds)
 	fenv := FinalEnvironment{*env, Dae, Dce, Dbe, Dao, Dco, Dbo, FreeEnergy}
 	return &fenv
 }
