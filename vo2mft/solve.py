@@ -37,13 +37,9 @@ def solve(env, eps=1e-6):
 def solve_set(envs, eps=1e-6):
     '''Return a list of solved final envs corresponding to the given list of
     envs, solved to accuracy given by eps.
-    '''
-    # Run as many as one solver process for each cpu.
-    #num_cpus = os.cpu_count()
-    #if num_cpus == None:
-    #    num_cpus = 1
 
-    # TODO - can parallelize this by calling multiple solver processes.
+    The set of envs is solved serially (only one process is invoked).
+    '''
     final_envs = []
     for initial_env in envs:
         this_final_env = solve(initial_env, eps)

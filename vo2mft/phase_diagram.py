@@ -1,5 +1,6 @@
 from argparse import ArgumentParser
 from copy import deepcopy
+from multiprocessing import Pool
 import numpy as np
 import matplotlib.pyplot as plt
 from vo2mft.environment import QJ_ion
@@ -37,10 +38,15 @@ def phase_sample(base_env, num_Bs, num_Ts):
 
 def min_envs_from_sample(sample_envs):
     eps = 1e-6
-    min_envs = []
+    sample_env_eps = []
     for env in sample_envs:
-        min_env = minimize_free_energy(env, eps)
-        min_envs.append(min_env)
+        sample_env_eps.append((env, eps))
+
+    # Find minimal free energy solutions of sample_envs in parallel.
+    # Pool() uses number of workers = os.cpu_count() by default.
+    min_envs = None
+    with Pool() as pool:
+        min_envs = pool.starmap(minimize_free_energy, sample_env_eps)
 
     return min_envs
 
