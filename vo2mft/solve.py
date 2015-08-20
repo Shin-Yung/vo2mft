@@ -13,19 +13,36 @@ def solve(env, eps=1e-6):
 
     write_env_file(env, in_path)
 
+    # Run solver.
     solver_call = [solver_path, "--eps", str(eps), in_path, out_path]
     subprocess.call(solver_call)
 
+    # Read solver output, if it exists.
     final_env_path = out_path + "_fenv.json"
-    final_env = read_env_file(final_env_path)
-    os.remove(in_path)
-    os.remove(final_env_path)
+    final_env = None
+    try:
+        final_env = read_env_file(final_env_path)
+    except FileNotFoundError:
+        pass
+
+    # Clean up solver input/output.
+    try:
+        os.remove(in_path)
+        os.remove(final_env_path)
+    except FileNotFoundError:
+        pass
+
     return final_env
 
 def solve_set(envs, eps=1e-6):
     '''Return a list of solved final envs corresponding to the given list of
     envs, solved to accuracy given by eps.
     '''
+    # Run as many as one solver process for each cpu.
+    #num_cpus = os.cpu_count()
+    #if num_cpus == None:
+    #    num_cpus = 1
+
     # TODO - can parallelize this by calling multiple solver processes.
     final_envs = []
     for initial_env in envs:

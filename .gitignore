@@ -1,4 +1,5 @@
 *.swp
 *.pyc
+*.png
 vo2solve/vo2solve_front/vo2solve_front
 vo2mft.egg-info

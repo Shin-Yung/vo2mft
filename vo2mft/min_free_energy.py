@@ -26,7 +26,11 @@ def minimize_free_energy(env, eps=1e-6):
     # Find env with minimum free energy.
     min_env = None
     for final_env in final_envs:
+        # May not have found a solution.
+        if final_env == None:
+            return None
         free_energy = final_env["FreeEnergy"]
         if min_env == None or free_energy < min_env["FreeEnergy"]:
             min_env = final_env
+
     return min_env
