@@ -3,8 +3,8 @@ from vo2mft.solve import solve_set
 
 def minimize_free_energy(env, eps=1e-6, ions=False):
     '''Vary the initial conditions of env to find the solution which
-    minimizes the free energy. Return the initial and final envs
-    corresponding to the minimum solution.
+    minimizes the free energy. Return the minimum free energy env and
+    a list of all the solved envs.
     '''
     # Set of initial conditions to consider.
     # TODO - may need to expand this.
@@ -32,4 +32,4 @@ def minimize_free_energy(env, eps=1e-6, ions=False):
         if min_env == None or free_energy < min_env["FreeEnergy"]:
             min_env = final_env
 
-    return min_env
+    return min_env, final_envs

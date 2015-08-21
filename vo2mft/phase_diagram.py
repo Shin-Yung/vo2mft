@@ -2,6 +2,7 @@ from argparse import ArgumentParser
 from copy import deepcopy
 from multiprocessing import Pool
 import os
+import json
 import numpy as np
 import matplotlib.pyplot as plt
 from vo2mft.environment import QJ_ion
@@ -51,17 +52,36 @@ def min_envs_from_sample(sample_envs, ions, npar):
     if npar != None:
         pool_size = npar
 
-    min_envs = None
+    minimize_result = None
     with Pool(pool_size) as pool:
-        min_envs = pool.starmap(minimize_free_energy, sample_env_eps)
+        minimize_result = pool.starmap(minimize_free_energy, sample_env_eps)
 
-    return min_envs
+    all_min_envs, all_final_envs = [], []
+    for min_env, final_envs in minimize_result:
+        all_min_envs.append(min_env)
+        all_final_envs.append(final_envs)
+
+    return all_min_envs, all_final_envs
 
 def min_envs_from_base(base_path, ions, num_Bs, num_Ts, npar):
     base_env = read_env_file(base_path)
     sample = phase_sample(base_env, num_Bs, num_Ts)
-    min_envs = min_envs_from_sample(sample, ions, npar)
-    return min_envs
+    min_envs, all_fenvs = min_envs_from_sample(sample, ions, npar)
+    return min_envs, all_fenvs
+
+def _save_min_envs(envs, prefix):
+    min_envs_strl = []
+    for env in envs:
+        min_envs_strl.append(json.dumps(env))
+    with open(prefix + "_min_data", 'w') as fp:
+        fp.write('\n'.join(min_envs_strl))
+
+def _save_all_envs(all_envs, prefix):
+    all_envs_strl = []
+    for env_list in all_envs:
+        all_envs_strl.append(json.dumps(env_list))
+    with open(prefix + "_all_data", 'w') as fp:
+        fp.write('\n'.join(all_envs_strl))
 
 def _collect_BTM(min_envs):
     xs, ys, Ms = [], [], []
@@ -114,7 +134,9 @@ def _main():
     args = parser.parse_args()
 
     # TODO - don't assume run in own directory
-    min_envs = min_envs_from_base(args.base_env_path, args.ions, args.num_Bs, args.num_Ts, args.npar)
+    min_envs, all_fenvs = min_envs_from_base(args.base_env_path, args.ions, args.num_Bs, args.num_Ts, args.npar)
+    _save_min_envs(min_envs, args.out_prefix)
+    _save_all_envs(all_fenvs, args.out_prefix)
 
     Bs, Ts, Ms = _collect_BTM(min_envs)
     _make_M_diagram(Bs, Ts, Ms, args.out_prefix)
