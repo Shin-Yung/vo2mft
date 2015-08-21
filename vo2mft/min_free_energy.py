@@ -8,8 +8,7 @@ def minimize_free_energy(env, eps=1e-6):
     '''
     # Set of initial conditions to consider.
     # TODO - may need to expand this.
-    initial_conds = [{"M": 0.0, "W":0.0}, {"M":1.0, "W":1.0},
-            {"M": 0.1, "W": 0.01}]
+    initial_conds = [{"M": 0.01, "W":0.01}, {"M":1.0, "W":1.0}]
 
     # Set up envs with specified set of initial conditions.
     initial_envs = []
