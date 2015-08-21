@@ -18,6 +18,8 @@ const zero_threshold = 1e-12
 type HoppingEV struct {
 	// Value of M for which the contained hopping e.v.'s have been calculated.
 	m_dae, m_dce, m_dbe, m_dao, m_dco, m_dbo float64
+	// Value of Mu for which the contained hopping e.v.'s have been calculated.
+	mu_dae, mu_dce, mu_dbe, mu_dao, mu_dco, mu_dbo float64
 	// If hopping e.v.'s have not been calculated yet, init = false.
 	init_dae, init_dce, init_dbe, init_dao, init_dco, init_dbo bool
 	// Hopping e.v.'s for even symmetry (pre-calculated).
@@ -27,9 +29,9 @@ type HoppingEV struct {
 }
 
 func (Ds *HoppingEV) Dae(env *Environment) float64 {
-	//if Ds.init_dae && (env.M == Ds.m_dae) {
-	//	return Ds.dae
-	//}
+	if Ds.init_dae && (env.M == Ds.m_dae) && (env.Mu == Ds.mu_dae) {
+		return Ds.dae
+	}
 	if !env.FiniteHoppings() {
 		return 0.0
 	}
@@ -55,14 +57,15 @@ func (Ds *HoppingEV) Dae(env *Environment) float64 {
 
 	Ds.init_dae = true
 	Ds.m_dae = env.M
+	Ds.mu_dae = env.Mu
 	Ds.dae = dae
 	return dae
 }
 
 func (Ds *HoppingEV) Dce(env *Environment) float64 {
-	//if Ds.init_dce && (env.M == Ds.m_dce) {
-	//	return Ds.dce
-	//}
+	if Ds.init_dce && (env.M == Ds.m_dce) && (env.Mu == Ds.mu_dce) {
+		return Ds.dce
+	}
 	if !env.FiniteHoppings() {
 		return 0.0
 	}
@@ -88,14 +91,15 @@ func (Ds *HoppingEV) Dce(env *Environment) float64 {
 
 	Ds.init_dce = true
 	Ds.m_dce = env.M
+	Ds.mu_dce = env.Mu
 	Ds.dce = dce
 	return dce
 }
 
 func (Ds *HoppingEV) Dbe(env *Environment) float64 {
-	//if Ds.init_dbe && (env.M == Ds.m_dbe) {
-	//	return Ds.dbe
-	//}
+	if Ds.init_dbe && (env.M == Ds.m_dbe) && (env.Mu == Ds.mu_dbe) {
+		return Ds.dbe
+	}
 	if !env.FiniteHoppings() {
 		return 0.0
 	}
@@ -108,14 +112,15 @@ func (Ds *HoppingEV) Dbe(env *Environment) float64 {
 
 	Ds.init_dbe = true
 	Ds.m_dbe = env.M
+	Ds.mu_dbe = env.Mu
 	Ds.dbe = dbe
 	return dbe
 }
 
 func (Ds *HoppingEV) Dao(env *Environment) float64 {
-	//if Ds.init_dao && (env.M == Ds.m_dao) {
-	//	return Ds.dao
-	//}
+	if Ds.init_dao && (env.M == Ds.m_dao) && (env.Mu == Ds.mu_dao) {
+		return Ds.dao
+	}
 	if !env.FiniteHoppings() {
 		return 0.0
 	}
@@ -143,14 +148,15 @@ func (Ds *HoppingEV) Dao(env *Environment) float64 {
 
 	Ds.init_dao = true
 	Ds.m_dao = env.M
+	Ds.mu_dao = env.Mu
 	Ds.dao = dao
 	return dao
 }
 
 func (Ds *HoppingEV) Dco(env *Environment) float64 {
-	//if Ds.init_dco && (env.M == Ds.m_dco) {
-	//	return Ds.dco
-	//}
+	if Ds.init_dco && (env.M == Ds.m_dco) && (env.Mu == Ds.mu_dco) {
+		return Ds.dco
+	}
 	if !env.FiniteHoppings() {
 		return 0.0
 	}
@@ -177,14 +183,15 @@ func (Ds *HoppingEV) Dco(env *Environment) float64 {
 
 	Ds.init_dco = true
 	Ds.m_dco = env.M
+	Ds.mu_dco = env.Mu
 	Ds.dco = dco
 	return dco
 }
 
 func (Ds *HoppingEV) Dbo(env *Environment) float64 {
-	//if Ds.init_dbo && (env.M == Ds.m_dbo) {
-	//	return Ds.dbo
-	//}
+	if Ds.init_dbo && (env.M == Ds.m_dbo) && (env.Mu == Ds.mu_dbo) {
+		return Ds.dbo
+	}
 	if !env.FiniteHoppings() {
 		return 0.0
 	}
@@ -198,6 +205,7 @@ func (Ds *HoppingEV) Dbo(env *Environment) float64 {
 
 	Ds.init_dbo = true
 	Ds.m_dbo = env.M
+	Ds.mu_dbo = env.Mu
 	Ds.dbo = dbo
 	return dbo
 }
