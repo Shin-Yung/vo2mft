@@ -18,7 +18,7 @@ def phase_sample(base_env, num_Bs, num_Ts):
     #Bratio_start, Bratio_stop = 0.01, 0.7  # ions
     Bratio_start, Bratio_stop = 0.01, 1.2   # electrons
     #Tratio_start, Tratio_stop = 0.1, 1.0
-    Tratio_start, Tratio_stop = 0.01, 1.0
+    Tratio_start, Tratio_stop = 0.01, 0.8
 
     Bratios = np.linspace(Bratio_start, Bratio_stop, num_Bs)
     Tratios = np.linspace(Tratio_start, Tratio_stop, num_Ts)
