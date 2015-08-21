@@ -18,20 +18,20 @@ func TestRegressionSolveSystem(t *testing.T) {
 	// Initial conditions: M = 1.0; W = 1.0.
 	// Beta = 100.0, 10.0, and 0.1.
 	// expected_result = [m, w, mu]; expected_Ds = [Dao, Dco].
-	expected_result_largeM_b100 := []float64{1.0, 1.0, -2.5674589838322244}
-	expected_Ds_largeM_b100 := []float64{0.07204174183966662, 0.04728135302972381}
-	expected_result_largeM_b10 := []float64{0.9999999999971557, 0.9999999999971557, -2.538739633495934}
-	expected_Ds_largeM_b10 := []float64{0.072591514675989, 0.04677945708493083}
-	expected_result_largeM_b0_1 := []float64{-5.895244303210709e-10, 0.6664444023084701, -11.224011853014702}
-	expected_Ds_largeM_b0_1 := []float64{-1.0835533804262066e-11, -5.415817658614926e-12}
+	expected_result_largeM_b100 := []float64{1.0, 1.0, -2.484757449884048}
+	expected_Ds_largeM_b100 := []float64{0.072234636374735, 0.047713408035940756}
+	expected_result_largeM_b10 := []float64{0.9999999999971739, 0.9999999999971739, -2.459610225368738}
+	expected_Ds_largeM_b10 := []float64{0.07262525926112415, 0.04792141776134653}
+	expected_result_largeM_b0_1 := []float64{-5.895211371059444e-10, 0.6664444023085105, -11.224011853221501}
+	expected_Ds_largeM_b0_1 := []float64{-1.0835473471881098e-11, -5.415787167984652e-12}
 	// Initial conditions: M = 0.1; W = 0.01.
 	// Beta = 100.0, 10.0, and 0.1.
-	expected_result_smallM_b100 := []float64{1.0, 1.0, -2.56745699439314}
-	expected_Ds_smallM_b100 := []float64{0.07204176342035805, 0.047281379960874975}
-	expected_result_smallM_b10 := []float64{-2.562304229335293e-10, 0.6440869234501366, -1.483771702424886}
-	expected_Ds_smallM_b10 := []float64{-2.724957953642525e-11, -1.2360228333600988e-11}
-	expected_result_smallM_b0_1 := []float64{-8.463415267568632e-14, 0.666444407419614, -11.224023907935099}
-	expected_Ds_smallM_b0_1 := []float64{-1.5555838004397371e-15, -7.775630601417968e-16}
+	expected_result_smallM_b100 := []float64{1.0, 1.0, -2.484757677675485}
+	expected_Ds_smallM_b100 := []float64{0.07223462146639055, 0.04771339475446586}
+	expected_result_smallM_b10 := []float64{-1.8376863666856174e-09, 0.6440868923032077, -1.3826195271154291}
+	expected_Ds_smallM_b10 := []float64{-1.9388440095595153e-10, -7.70737994809756e-11}
+	expected_result_smallM_b0_1 := []float64{-8.463415247009317e-14, 0.666444407419614, -11.224023908144346}
+	expected_Ds_smallM_b0_1 := []float64{-1.5557672979419076e-15, -7.776962415169131e-16}
 
 	all_setup := []map[string]float64{map[string]float64{"M": 1.0, "W": 1.0, "Beta": 100.0},
 		map[string]float64{"M": 1.0, "W": 1.0, "Beta": 10.0},
