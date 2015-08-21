@@ -17,10 +17,7 @@ func AbsErrorMu(env *Environment, variables []string) solve.Diffable {
 			return innerMu(env, k)
 		}
 		lhs := 1.0
-		//rhs := bzone.Avg(L, 3, innerClosure)
 		rhs := 0.5 * bzone.Avg(L, 3, innerClosure)
-		//println("Mu:", env.Mu)
-		//println("Mu lhs - rhs:", lhs - rhs)
 		return lhs - rhs, nil
 	}
 	h := 1e-6
@@ -34,8 +31,9 @@ func innerMu(env *Environment, k vec.Vector) float64 {
 	evals, _ := cmatrix.Eigensystem(H)
 	sum := 0.0
 	for alpha := 0; alpha < dim; alpha++ {
+		// Mu is included in H, so not included here.
 		sum += env.Fermi(evals[alpha])
-		//sum += env.Fermi(evals[alpha] - env.Mu)
 	}
+	// Multiply by 2 for spin degeneracy.
 	return 2.0 * sum
 }

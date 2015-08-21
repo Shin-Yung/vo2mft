@@ -62,7 +62,6 @@ func TestRegressionSolveSystem(t *testing.T) {
 		for k, v := range setup {
 			env.Set([]float64{v}, []string{k})
 		}
-		//fmt.Println(env.String())
 
 		// Solve for (M, W, Mu).
 		eps := 1e-6

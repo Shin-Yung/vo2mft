@@ -36,16 +36,13 @@ func (Ds *HoppingEV) Dae(env *Environment) float64 {
 
 	inner := func(k vec.Vector) float64 {
 		ev := GetEV_K0_K0(env, k)
-		//println("Dae", ev)
 		// make sure that ev is pure real
 		//if math.Abs(imag(ev)) > zero_threshold {
 		//	panic("Expected pure real value for <c_{k,0}^{\\dagger} c_{k,0}>, got finite imaginary part")
 		//}
 		return 4.0 * math.Cos(k[0]) * real(ev)
 	}
-	//dae := bzone.Avg(env.BZPointsPerDim, 3, inner)
 	dae := 0.5 * bzone.Avg(env.BZPointsPerDim, 3, inner)
-	//println("Dae", dae)
 
 	inner_im := func(k vec.Vector) float64 {
 		ev := GetEV_K0_K0(env, k)
@@ -72,16 +69,13 @@ func (Ds *HoppingEV) Dce(env *Environment) float64 {
 
 	inner := func(k vec.Vector) float64 {
 		ev := GetEV_K0_K0(env, k)
-		//println("Dce", ev)
 		// make sure that ev is pure real
 		//if math.Abs(imag(ev)) > zero_threshold {
 		//	panic("Expected pure real value for <c_{k,0}^{\\dagger} c_{k,0}>, got finite imaginary part")
 		//}
 		return 4.0 * math.Cos(k[2]) * real(ev)
 	}
-	//dce := bzone.Avg(env.BZPointsPerDim, 3, inner)
 	dce := 0.5 * bzone.Avg(env.BZPointsPerDim, 3, inner)
-	//println("Dce", dce)
 
 	inner_im := func(k vec.Vector) float64 {
 		ev := GetEV_K0_K0(env, k)
@@ -108,12 +102,9 @@ func (Ds *HoppingEV) Dbe(env *Environment) float64 {
 
 	inner := func(k vec.Vector) float64 {
 		ev := GetEV_K0_K1(env, k)
-		//println("Dbe", ev)
 		return 2.0 * real(ev+cmplx.Conj(ev))
 	}
-	//dbe := bzone.Avg(env.BZPointsPerDim, 3, inner)
 	dbe := 0.5 * bzone.Avg(env.BZPointsPerDim, 3, inner)
-	//println("Dbe", dbe)
 
 	Ds.init_dbe = true
 	Ds.m_dbe = env.M
@@ -139,17 +130,13 @@ func (Ds *HoppingEV) Dao(env *Environment) float64 {
 		// 2i * ev = -2 * imag(ev)
 		return -2.0 * math.Sin(k[0]) * imag(ev)
 	}
-	//dao := bzone.Avg(env.BZPointsPerDim, 3, inner)
 	dao := 0.5 * bzone.Avg(env.BZPointsPerDim, 3, inner)
-	//println("Dao_M, W, Mu:", env.M, env.W, env.Mu)
-	//println("Dao", dao)
 
 	inner_re := func(k vec.Vector) float64 {
 		ev := GetEV_KQ0_K0(env, k)
 		return 2.0 * math.Sin(k[0]) * real(ev)
 	}
 	dao_re := bzone.Avg(env.BZPointsPerDim, 3, inner_re)
-	//println("Dao_re", dao_re)
 	if math.Abs(dao_re) > zero_threshold {
 		panic("Expected real value for Dao, got finite imaginary part.")
 	}
@@ -170,7 +157,6 @@ func (Ds *HoppingEV) Dco(env *Environment) float64 {
 
 	inner := func(k vec.Vector) float64 {
 		ev := GetEV_KQ0_K0(env, k)
-		//println("Dco", ev)
 		// make sure that ev is pure imaginary
 		//if math.Abs(real(ev)) > zero_threshold {
 		//	panic("Expected pure imaginary value for <c_{k+Q,0}^{\\dagger} c_{k,0}>, got finite real part")
@@ -178,9 +164,7 @@ func (Ds *HoppingEV) Dco(env *Environment) float64 {
 		// 2i * ev = -2 * imag(ev)
 		return -2.0 * math.Sin(k[2]) * imag(ev)
 	}
-	//dco := bzone.Avg(env.BZPointsPerDim, 3, inner)
 	dco := 0.5 * bzone.Avg(env.BZPointsPerDim, 3, inner)
-	//println("Dco", dco)
 
 	inner_re := func(k vec.Vector) float64 {
 		ev := GetEV_KQ0_K0(env, k)
@@ -210,9 +194,7 @@ func (Ds *HoppingEV) Dbo(env *Environment) float64 {
 		//println("Dbo", ev)
 		return real(ev + cmplx.Conj(ev))
 	}
-	//dbo := bzone.Avg(env.BZPointsPerDim, 3, inner)
 	dbo := 0.5 * bzone.Avg(env.BZPointsPerDim, 3, inner)
-	//println("Dbo", dbo)
 
 	Ds.init_dbo = true
 	Ds.m_dbo = env.M
@@ -267,7 +249,6 @@ func GetEV_KQ0_K1(env *Environment, k vec.Vector) complex128 {
 // 	1 <--> k, 0 ; 2 <--> k+Q, 0 ; 3 <--> k, 1 ; 4 <--> k+Q, 1
 func evalEV(env *Environment, k vec.Vector, indexL, indexR int) complex128 {
 	H := ElHamiltonian(env, k)
-	//println(H.String())
 	dim, _ := H.Dims()
 	evals, evecs := cmatrix.Eigensystem(H)
 	sum := complex(0.0, 0.0)
@@ -279,8 +260,8 @@ func evalEV(env *Environment, k vec.Vector, indexL, indexR int) complex128 {
 		left := cmplx.Conj(evecs[alpha][indexL-1])
 		right := evecs[alpha][indexR-1]
 		// Fermi-Dirac occupation.
+		// Mu is included in H, so not included here.
 		occ := env.Fermi(evals[alpha])
-		//occ := env.Fermi(evals[alpha] - env.Mu)
 		// alpha'th eigenvector contribution to EV.
 		sum += left * right * complex(occ, 0.0)
 	}
