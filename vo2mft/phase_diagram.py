@@ -14,8 +14,10 @@ def phase_sample(base_env, num_Bs, num_Ts):
     # Generate set of (B, T) values.
     # TODO - generalize away from EpsilonM - EpsilonR = 0.
     base_QJ_ion = QJ_ion(base_env)
-    Bratio_start, Bratio_stop = 0.01, 0.75
-    Tratio_start, Tratio_stop = 0.1, 1.0
+    #Bratio_start, Bratio_stop = 0.01, 0.7  # ions
+    Bratio_start, Bratio_stop = 0.01, 1.2   # electrons
+    #Tratio_start, Tratio_stop = 0.1, 1.0
+    Tratio_start, Tratio_stop = 0.01, 1.0
 
     Bratios = np.linspace(Bratio_start, Bratio_stop, num_Bs)
     Tratios = np.linspace(Tratio_start, Tratio_stop, num_Ts)
@@ -73,7 +75,15 @@ def _collect_BTM(min_envs):
     return xs, ys, Ms
 
 def _make_M_diagram(Bs, Ts, Ms, out_prefix):
-    plt.scatter(Bs, Ts, c=Ms, cmap='gnuplot', s=100, edgecolors="none")
+    plt.xlabel("$b/q_J^{ion}$")
+    plt.ylabel("$T/q_J^{ion}$")
+    plt.title("$m$")
+
+    plt.xlim(0.0, max(Bs))
+    plt.ylim(0.0, max(Ts))
+
+    #plt.scatter(Bs, Ts, c=Ms, cmap='gnuplot', s=100, edgecolors="none") # 10x10
+    plt.scatter(Bs, Ts, c=Ms, cmap='gnuplot', s=15, edgecolors="none") # 100x100
     plt.colorbar()
 
     if out_prefix == None:
