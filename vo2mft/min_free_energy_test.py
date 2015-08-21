@@ -9,17 +9,18 @@ class SolveEnvTest(unittest.TestCase):
         eps = 1e-6
         env["EpsilonR"] = 0.05
         env["EpsilonM"] = 0.05
+        ions = False
 
         M_expected_beta_0_1 = 0.0
         M_expected_beta_10 = 0.9999999999971557
 
         env["Beta"] = 0.1
-        min_env_beta_0_1 = minimize_free_energy(env, eps)
+        min_env_beta_0_1 = minimize_free_energy(env, eps, ions)
         print("Minimum free energy env with beta = 0.1:", min_env_beta_0_1)
         self.assertTrue(abs(M_expected_beta_0_1 - min_env_beta_0_1["M"]) < 2.0*eps)
 
         env["Beta"] = 10.0
-        min_env_beta_10 = minimize_free_energy(env, eps)
+        min_env_beta_10 = minimize_free_energy(env, eps, ions)
         print("Minimum free energy env with beta = 10.0:", min_env_beta_10)
         self.assertTrue(abs(M_expected_beta_10 - min_env_beta_10["M"]) < 2.0*eps)
 

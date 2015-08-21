@@ -1,7 +1,7 @@
 from copy import deepcopy
 from vo2mft.solve import solve_set
 
-def minimize_free_energy(env, eps=1e-6):
+def minimize_free_energy(env, eps=1e-6, ions=False):
     '''Vary the initial conditions of env to find the solution which
     minimizes the free energy. Return the initial and final envs
     corresponding to the minimum solution.
@@ -19,7 +19,7 @@ def minimize_free_energy(env, eps=1e-6):
         initial_envs.append(this_initial_env)
 
     # Solve envs.
-    final_envs = solve_set(initial_envs, eps)
+    final_envs = solve_set(initial_envs, eps, ions)
     print(final_envs)
 
     # Find env with minimum free energy.

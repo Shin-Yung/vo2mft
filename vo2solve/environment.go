@@ -40,6 +40,14 @@ type Environment struct {
 	Ka, Kc, Kb float64
 	// On-site energies in M and R phases.
 	EpsilonM, EpsilonR float64
+	// Consider only ionic part of the problem:
+	// only ions contribute to free energy; should solve
+	// for (M, W).
+	// If this is set to true, need to also set the following to 0:
+	// Tae, Tce, Tbe, Tao, Tco, Tbo, EpsilonM, EpsilonR, Mu.
+	// (maybe don't need to fix Mu = 0 -- large negative value could
+	// be better).
+	IonsOnly bool
 }
 
 // Environment with all self-consistent values converged.
@@ -102,14 +110,20 @@ func (env *Environment) Fermi(energy float64) float64 {
 	return 1.0 / (math.Exp(energy*env.Beta) + 1.0)
 }
 
-// Free energy value.
+// Free energy per cell value (Ncell = 2Nsite).
 // Points on the phase diagram include the state with minimum free energy
-// (may not reach this state, depending on initial conditions).
+// (may not reach this state, depending on initial conditions - need to
+// consider a set of initial conditions and look for minimum).
 func (env *Environment) FreeEnergy(Ds *HoppingEV) float64 {
-	// TODO - check correctness of interaction_part.
-	interaction_part := env.QJ(Ds)*math.Pow(env.M, 2.0) + env.QK()*math.Pow(env.W, 2.0) + env.Qele(Ds)
-
-	return env.FreeEnergyIons(Ds) + env.FreeEnergyElectrons() + interaction_part
+	ion_part := env.FreeEnergyIons(Ds)
+	// avg_avg_part includes <S><S>, <S^2><S^2>, and <S><c^{\dagger}c> terms.
+	avg_avg_part := env.QJ(Ds)*math.Pow(env.M, 2.0) + env.QK()*math.Pow(env.W, 2.0) + env.Qele(Ds)
+	if env.IonsOnly {
+		return ion_part + avg_avg_part
+	} else {
+		electron_part := env.FreeEnergyElectrons()
+		return ion_part + electron_part + avg_avg_part
+	}
 }
 
 func (env *Environment) FreeEnergyIons(Ds *HoppingEV) float64 {
@@ -177,6 +191,26 @@ func LoadEnv(envFilePath string) (*Environment, error) {
 	if err != nil {
 		return nil, err
 	}
+	return env, nil
+}
+
+// Load an Environment from the JSON file at envFilePath.
+// Set all electronic parameters to 0 to restrict to ionic system.
+func LoadIonEnv(envFilePath string) (*Environment, error) {
+	env, err := LoadEnv(envFilePath)
+	if err != nil {
+		return nil, err
+	}
+	env.Tae = 0.0
+	env.Tce = 0.0
+	env.Tbe = 0.0
+	env.Tao = 0.0
+	env.Tco = 0.0
+	env.Tbo = 0.0
+	env.EpsilonM = 0.0
+	env.EpsilonR = 0.0
+	env.Mu = 0.0
+	env.IonsOnly = true
 	return env, nil
 }
 

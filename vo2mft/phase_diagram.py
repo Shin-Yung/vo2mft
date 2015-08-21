@@ -1,6 +1,7 @@
 from argparse import ArgumentParser
 from copy import deepcopy
 from multiprocessing import Pool
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 from vo2mft.environment import QJ_ion
@@ -38,24 +39,28 @@ def phase_sample(base_env, num_Bs, num_Ts):
 
     return sample_envs
 
-def min_envs_from_sample(sample_envs):
+def min_envs_from_sample(sample_envs, ions, npar):
     eps = 1e-6
     sample_env_eps = []
     for env in sample_envs:
-        sample_env_eps.append((env, eps))
+        sample_env_eps.append((env, eps, ions))
 
     # Find minimal free energy solutions of sample_envs in parallel.
     # Pool() uses number of workers = os.cpu_count() by default.
+    pool_size = os.cpu_count()
+    if npar != None:
+        pool_size = npar
+
     min_envs = None
-    with Pool() as pool:
+    with Pool(pool_size) as pool:
         min_envs = pool.starmap(minimize_free_energy, sample_env_eps)
 
     return min_envs
 
-def min_envs_from_base(base_path, num_Bs, num_Ts):
+def min_envs_from_base(base_path, ions, num_Bs, num_Ts, npar):
     base_env = read_env_file(base_path)
     sample = phase_sample(base_env, num_Bs, num_Ts)
-    min_envs = min_envs_from_sample(sample)
+    min_envs = min_envs_from_sample(sample, ions, npar)
     return min_envs
 
 def _collect_BTM(min_envs):
@@ -99,14 +104,17 @@ def _main():
             default="phase_diagram_env.json")
     parser.add_argument('--out_prefix', type=str, help="Output file path prefix",
             default="out_phase_diagram")
-    parser.add_argument('--num_Ts', type=int, help="Number of temperature points",
-            default=20)
+    parser.add_argument('--ions', action='store_true', help="Consider only ionic part")
     parser.add_argument('--num_Bs', type=int, help="Number of B points",
             default=20)
+    parser.add_argument('--num_Ts', type=int, help="Number of temperature points",
+            default=20)
+    parser.add_argument('--npar', type=int, help="Number of parallel processes",
+            default=None)
     args = parser.parse_args()
 
     # TODO - don't assume run in own directory
-    min_envs = min_envs_from_base(args.base_env_path, args.num_Ts, args.num_Bs)
+    min_envs = min_envs_from_base(args.base_env_path, args.ions, args.num_Bs, args.num_Ts, args.npar)
 
     Bs, Ts, Ms = _collect_BTM(min_envs)
     _make_M_diagram(Bs, Ts, Ms, args.out_prefix)

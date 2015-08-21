@@ -4,7 +4,7 @@ import json
 from uuid import uuid4
 from vo2mft.util import _solve_front_path
 
-def solve(env, eps=1e-6):
+def solve(env, eps=1e-6, ions=False):
     '''Return the solved final env corresponding to the given env, solved to
     accuracy given by eps.
     '''
@@ -14,7 +14,11 @@ def solve(env, eps=1e-6):
     write_env_file(env, in_path)
 
     # Run solver.
-    solver_call = [solver_path, "--eps", str(eps), in_path, out_path]
+    solver_call = None
+    if not ions:
+        solver_call = [solver_path, "--eps", str(eps), in_path, out_path]
+    else:
+        solver_call = [solver_path, "--eps", str(eps), "--ions", in_path, out_path]
     subprocess.call(solver_call)
 
     # Read solver output, if it exists.
@@ -34,7 +38,7 @@ def solve(env, eps=1e-6):
 
     return final_env
 
-def solve_set(envs, eps=1e-6):
+def solve_set(envs, eps=1e-6, ions=False):
     '''Return a list of solved final envs corresponding to the given list of
     envs, solved to accuracy given by eps.
 
@@ -42,7 +46,7 @@ def solve_set(envs, eps=1e-6):
     '''
     final_envs = []
     for initial_env in envs:
-        this_final_env = solve(initial_env, eps)
+        this_final_env = solve(initial_env, eps, ions)
         final_envs.append(this_final_env)
     return final_envs
 
