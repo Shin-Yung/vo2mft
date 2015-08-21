@@ -114,7 +114,7 @@ func (env *Environment) FreeEnergy(Ds *HoppingEV) float64 {
 
 func (env *Environment) FreeEnergyIons(Ds *HoppingEV) float64 {
 	T := 1.0 / env.Beta
-	return -T * math.Log(env.Z1(Ds))
+	return -2.0 * T * math.Log(env.Z1(Ds))
 }
 
 func (env *Environment) FreeEnergyElectrons() float64 {
