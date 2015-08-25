@@ -8,6 +8,8 @@ import matplotlib.pyplot as plt
 from vo2mft.environment import QJ_ion
 from vo2mft.min_free_energy import minimize_free_energy
 from vo2mft.solve import read_env_file
+from vo2mft.dos import Dos, FindGaps
+from vo2mft.elHamiltonian import ElHamiltonian_Recip
 
 def phase_sample(base_env, num_Bs, num_Ts):
     '''Generate a set of envs over which the phase diagram will be sampled,
@@ -113,16 +115,49 @@ def _collect_BTM(min_envs):
 
     return xs, ys, Ms
 
-def _make_M_diagram(Bs, Ts, Ms, out_prefix):
+def _collect_BTgaps(min_envs, num_dos=500, n0=4):
+    xs, ys, gaps = [], [], []
+    for this_env in min_envs:
+        # May not have found a solution for all envs.
+        if this_env == None:
+            continue
+        # This env was solved -- add it to plot.
+        this_QJ_ion = QJ_ion(this_env)
+        Bratio = this_env["B"] / this_QJ_ion
+        Tratio = (1.0 / this_env["Beta"]) / this_QJ_ion
+        xs.append(Bratio)
+        ys.append(Tratio)
+
+        def Hk(k):
+            return ElHamiltonian_Recip(this_env, k)
+
+        dos_vals, E_vals = Dos(Hk, num_dos, n0)
+        this_gaps = FindGaps(dos_vals, E_vals)
+
+        if len(this_gaps) > 1:
+            print("WARNING: found more than one gap;")
+            print("assuming first gap is around E_F -- this may be incorrect.")
+
+        gap_size = None
+        if len(this_gaps) == 0:
+            gap_size = 0.0
+        else:
+            gap_size = this_gaps[0][1] - this_gaps[0][0]
+
+        gaps.append(gap_size / this_QJ_ion)
+
+    return xs, ys, gaps
+
+def _make_val_diagram(Bs, Ts, vals, val_label, out_prefix):
     plt.xlabel("$b/q_J^{ion}$")
     plt.ylabel("$T/q_J^{ion}$")
-    plt.title("$m$")
+    plt.title(val_label)
 
     plt.xlim(0.0, max(Bs))
     plt.ylim(0.0, max(Ts))
 
-    #plt.scatter(Bs, Ts, c=Ms, cmap='gnuplot', s=100, edgecolors="none") # 10x10
-    plt.scatter(Bs, Ts, c=Ms, cmap='gnuplot', s=15, edgecolors="none") # 100x100
+    #plt.scatter(Bs, Ts, c=vals, cmap='gnuplot', s=100, edgecolors="none") # 10x10
+    plt.scatter(Bs, Ts, c=vals, cmap='gnuplot', s=15, edgecolors="none") # 100x100
     plt.colorbar()
 
     if out_prefix == None:
@@ -160,7 +195,10 @@ def _main():
         min_envs = _read_min_envs(args.read_prefix)
 
     Bs, Ts, Ms = _collect_BTM(min_envs)
-    _make_M_diagram(Bs, Ts, Ms, args.out_prefix)
+    _make_val_diagram(Bs, Ts, Ms, "$m$", args.out_prefix + "_m")
+
+    Bs, Ts, gaps = _collect_BTgaps(min_envs)
+    _make_val_diagram(Bs, Ts, gaps, "Gap / $q_J^{ion}$", args.out_prefix + "_dos")
 
 if __name__ == "__main__":
     _main()

@@ -1,8 +1,20 @@
 import numpy as np
+from vo2mft.dos import _cubic_R
+
+def ElHamiltonian_Recip(env, k):
+    '''Calculate 4x4 electronic Hamiltonian H(k).
+    k is in the reciprocal lattice basis (i.e. k = (k_1, k_2, k_3) with
+    corresponding Cartesian representation k_Cart = k_1 b_1 + k_2 b_2 + k_3 b_3).
+    '''
+    R = _cubic_R(1.0)
+    kCart_scaled = np.dot(k, R)
+    return ElHamiltonian(env, kCart_scaled)
 
 def ElHamiltonian(env, k):
-    '''Calculate 4x4 electronic Hamiltonian.
-    Assumes that k is scaled such that kx*a, ky*a, kz*c --> kx, ky, kz.
+    '''Calculate 4x4 electronic Hamiltonian H(k).
+    k is in the Cartesian basis, with each component scaled by the corresponding
+    lattice constant; i.e. k = (a kx, a ky, c kz) and a kx, a ky, c kz range
+    over [-pi, pi) and periodic copies of this interval.
     '''
     # KQ = k + Q
     KQ = [k[0] + np.pi, k[1] + np.pi, k[2] + np.pi]
