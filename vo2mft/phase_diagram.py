@@ -69,12 +69,26 @@ def min_envs_from_base(base_path, ions, num_Bs, num_Ts, npar):
     min_envs, all_fenvs = min_envs_from_sample(sample, ions, npar)
     return min_envs, all_fenvs
 
+def _min_env_filename(prefix):
+    return prefix + "_min_data"
+
 def _save_min_envs(envs, prefix):
     min_envs_strl = []
     for env in envs:
         min_envs_strl.append(json.dumps(env))
-    with open(prefix + "_min_data", 'w') as fp:
+    with open(_min_env_filename(prefix), 'w') as fp:
         fp.write('\n'.join(min_envs_strl))
+
+def _read_min_envs(prefix):
+    min_envs_lines = None
+    with open(_min_env_filename(prefix), 'r') as fp:
+        min_envs_lines = fp.readlines()
+
+    min_envs = []
+    for line in min_envs_lines:
+        min_envs.append(json.loads(line.strip()))
+
+    return min_envs
 
 def _save_all_envs(all_envs, prefix):
     all_envs_strl = []
@@ -122,6 +136,8 @@ def _main():
     parser = ArgumentParser(description="Construct phase diagram")
     parser.add_argument('--base_env_path', type=str, help="Base environment file path",
             default="phase_diagram_env.json")
+    parser.add_argument('--read_prefix', type=str, default=None,
+            help="If specified, read solved envs from here instead of solving new systems")
     parser.add_argument('--out_prefix', type=str, help="Output file path prefix",
             default="out_phase_diagram")
     parser.add_argument('--ions', action='store_true', help="Consider only ionic part")
@@ -134,9 +150,14 @@ def _main():
     args = parser.parse_args()
 
     # TODO - don't assume run in own directory
-    min_envs, all_fenvs = min_envs_from_base(args.base_env_path, args.ions, args.num_Bs, args.num_Ts, args.npar)
-    _save_min_envs(min_envs, args.out_prefix)
-    _save_all_envs(all_fenvs, args.out_prefix)
+
+    min_envs, all_fenvs = None, None
+    if args.read_prefix == None:
+        min_envs, all_fenvs = min_envs_from_base(args.base_env_path, args.ions, args.num_Bs, args.num_Ts, args.npar)
+        _save_min_envs(min_envs, args.out_prefix)
+        _save_all_envs(all_fenvs, args.out_prefix)
+    else:
+        min_envs = _read_min_envs(args.read_prefix)
 
     Bs, Ts, Ms = _collect_BTM(min_envs)
     _make_M_diagram(Bs, Ts, Ms, args.out_prefix)
