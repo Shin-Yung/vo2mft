@@ -149,9 +149,9 @@ def _collect_BTgaps(min_envs, num_dos=500, n0=4):
     return xs, ys, gaps
 
 def _make_val_diagram(Bs, Ts, vals, val_label, out_prefix):
-    plt.xlabel("$b/q_J^{ion}$")
-    plt.ylabel("$T/q_J^{ion}$")
-    plt.title(val_label)
+    plt.xlabel("$b/q_J^{ion}$", fontsize='x-large')
+    plt.ylabel("$T/q_J^{ion}$", fontsize='x-large')
+    plt.title(val_label, fontsize='x-large')
 
     plt.xlim(0.0, max(Bs))
     plt.ylim(0.0, max(Ts))
