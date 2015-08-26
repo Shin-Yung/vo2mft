@@ -99,8 +99,8 @@ def _save_all_envs(all_envs, prefix):
     with open(prefix + "_all_data", 'w') as fp:
         fp.write('\n'.join(all_envs_strl))
 
-def _collect_BTM(min_envs):
-    xs, ys, Ms = [], [], []
+def _collect_BT_env_val(min_envs, val_name):
+    xs, ys, vals = [], [], []
     for this_env in min_envs:
         # May not have found a solution for all envs.
         if this_env == None:
@@ -111,9 +111,9 @@ def _collect_BTM(min_envs):
         Tratio = (1.0 / this_env["Beta"]) / this_QJ_ion
         xs.append(Bratio)
         ys.append(Tratio)
-        Ms.append(this_env["M"])
+        vals.append(this_env[val_name])
 
-    return xs, ys, Ms
+    return xs, ys, vals
 
 def _collect_BTgaps(min_envs, num_dos=500, n0=4):
     xs, ys, gaps = [], [], []
@@ -167,6 +167,10 @@ def _make_val_diagram(Bs, Ts, vals, val_label, out_prefix):
 
     plt.clf()
 
+def _make_BT_plot(min_envs, out_prefix, env_val, env_val_label):
+    Bs, Ts, Ms = _collect_BT_env_val(min_envs, env_val)
+    _make_val_diagram(Bs, Ts, Ms, env_val_label, "{}_{}".format(out_prefix, env_val))
+
 def _main():
     parser = ArgumentParser(description="Construct phase diagram")
     parser.add_argument('--base_env_path', type=str, help="Base environment file path",
@@ -194,8 +198,17 @@ def _main():
     else:
         min_envs = _read_min_envs(args.read_prefix)
 
-    Bs, Ts, Ms = _collect_BTM(min_envs)
-    _make_val_diagram(Bs, Ts, Ms, "$m$", args.out_prefix + "_m")
+    _make_BT_plot(min_envs, args.out_prefix, "M", "$m$")
+    _make_BT_plot(min_envs, args.out_prefix, "W", "$w$")
+
+    if not args.ions:
+        _make_BT_plot(min_envs, args.out_prefix, "Mu", "$\mu$")
+        _make_BT_plot(min_envs, args.out_prefix, "Dae", "$D_{ae}$")
+        _make_BT_plot(min_envs, args.out_prefix, "Dce", "$D_{ce}$")
+        _make_BT_plot(min_envs, args.out_prefix, "Dbe", "$D_{be}$")
+        _make_BT_plot(min_envs, args.out_prefix, "Dao", "$D_{ao}$")
+        _make_BT_plot(min_envs, args.out_prefix, "Dco", "$D_{co}$")
+        _make_BT_plot(min_envs, args.out_prefix, "Dbo", "$D_{bo}$")
 
     Bs, Ts, gaps = _collect_BTgaps(min_envs)
     _make_val_diagram(Bs, Ts, gaps, "Gap / $q_J^{ion}$", args.out_prefix + "_dos")
