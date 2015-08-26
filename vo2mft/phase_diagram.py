@@ -10,6 +10,7 @@ from vo2mft.min_free_energy import minimize_free_energy
 from vo2mft.solve import read_env_file
 from vo2mft.dos import Dos, FindGaps
 from vo2mft.elHamiltonian import ElHamiltonian_Recip
+from vo2mft.plot_spectrum import plot_spectrum
 
 def phase_sample(base_env, num_Bs, num_Ts):
     '''Generate a set of envs over which the phase diagram will be sampled,
@@ -116,7 +117,7 @@ def _collect_BT_env_val(min_envs, val_name):
     return xs, ys, vals
 
 def _collect_BTgaps(min_envs, num_dos=500, n0=4):
-    xs, ys, gaps = [], [], []
+    xs, ys, gaps, dos_vals, E_vals = [], [], [], [], []
     for this_env in min_envs:
         # May not have found a solution for all envs.
         if this_env == None:
@@ -131,8 +132,11 @@ def _collect_BTgaps(min_envs, num_dos=500, n0=4):
         def Hk(k):
             return ElHamiltonian_Recip(this_env, k)
 
-        dos_vals, E_vals = Dos(Hk, num_dos, n0)
-        this_gaps = FindGaps(dos_vals, E_vals)
+        this_dos_vals, this_E_vals = Dos(Hk, num_dos, n0)
+        this_gaps = FindGaps(this_dos_vals, this_E_vals)
+
+        dos_vals.append(this_dos_vals)
+        E_vals.append(this_E_vals)
 
         if len(this_gaps) > 1:
             print("WARNING: found more than one gap;")
@@ -146,7 +150,19 @@ def _collect_BTgaps(min_envs, num_dos=500, n0=4):
 
         gaps.append(gap_size / this_QJ_ion)
 
-    return xs, ys, gaps
+    return xs, ys, gaps, dos_vals, E_vals
+
+def _dos_data_path(out_prefix):
+    return out_prefix + "_dos_data"
+
+def _save_dos(Bs, Ts, gaps, dos_vals, E_vals, out_prefix):
+    dos_data = []
+    for B, T, gap, this_dos_vals, this_E_vals in zip(Bs, Ts, gaps, dos_vals, E_vals):
+        dos_dict = {"B": B, "T": T, "dos_vals": this_dos_vals, "E_vals": list(this_E_vals)}
+        dos_data.append(json.dumps(dos_dict))
+
+    with open(_dos_data_path(out_prefix), 'w') as fp:
+        fp.write('\n'.join(dos_data))
 
 def _make_val_diagram(Bs, Ts, vals, val_label, out_prefix):
     plt.xlabel("$b/q_J^{ion}$", fontsize='x-large')
@@ -171,6 +187,29 @@ def _make_BT_plot(min_envs, out_prefix, env_val, env_val_label):
     Bs, Ts, Ms = _collect_BT_env_val(min_envs, env_val)
     _make_val_diagram(Bs, Ts, Ms, env_val_label, "{}_{}".format(out_prefix, env_val))
 
+def _plot_dos(Bs, Ts, dos_vals, E_vals, out_prefix):
+    for B, T, dos, Es in zip(Bs, Ts, dos_vals, E_vals):
+        out_name = out_prefix + "_B_{}_T_{}_dos.png".format(str(B), str(T))
+
+        plt.xlabel("$E$")
+        plt.ylabel("DOS")
+        plt.xlim(min(Es), max(Es))
+        plt.ylim(min(dos), max(dos))
+
+        plt.plot(Es, dos, 'k-')
+
+        plt.savefig(out_name, bbox_inches='tight', dpi=500)
+        plt.clf()
+
+def _plot_spectra(min_envs, out_prefix):
+    for env in min_envs:
+        B, Beta = env["B"], env["Beta"]
+        T = 1.0/Beta
+        this_QJ_ion = QJ_ion(env)
+        Bratio, Tratio = B / this_QJ_ion, T / this_QJ_ion
+        out_name = out_prefix + "_B_{}_T_{}_spectrum".format(str(Bratio), str(Tratio))
+        plot_spectrum(env, out_name)
+
 def _main():
     parser = ArgumentParser(description="Construct phase diagram")
     parser.add_argument('--base_env_path', type=str, help="Base environment file path",
@@ -186,7 +225,14 @@ def _main():
             default=20)
     parser.add_argument('--npar', type=int, help="Number of parallel processes",
             default=None)
+    parser.add_argument('--plot_spectrum', action='store_true',
+            help="If specified, plot spectrum for each (B, T) point")
+    parser.add_argument('--plot_dos', action='store_true',
+            help="If specified, plot DOS for each (B, T) point")
     args = parser.parse_args()
+
+    # TODO -- add only_B, only_T options to fix (B, T) point for generating
+    # a few spectra/dos
 
     # TODO - don't assume run in own directory
 
@@ -210,8 +256,15 @@ def _main():
         _make_BT_plot(min_envs, args.out_prefix, "Dco", "$D_{co}$")
         _make_BT_plot(min_envs, args.out_prefix, "Dbo", "$D_{bo}$")
 
-    Bs, Ts, gaps = _collect_BTgaps(min_envs)
-    _make_val_diagram(Bs, Ts, gaps, "Gap / $q_J^{ion}$", args.out_prefix + "_dos")
+        if args.plot_spectrum:
+            _plot_spectra(min_envs, args.out_prefix)
+
+        Bs, Ts, gaps, dos_vals, E_vals = _collect_BTgaps(min_envs)
+        _make_val_diagram(Bs, Ts, gaps, "Gap / $q_J^{ion}$", args.out_prefix + "_gap")
+
+        _save_dos(Bs, Ts, gaps, dos_vals, E_vals, args.out_prefix)
+        if args.plot_dos:
+            _plot_dos(Bs, Ts, dos_vals, E_vals, args.out_prefix)
 
 if __name__ == "__main__":
     _main()
