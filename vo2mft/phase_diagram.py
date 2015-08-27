@@ -9,7 +9,6 @@ from vo2mft.environment import QJ_ion
 from vo2mft.min_free_energy import minimize_free_energy
 from vo2mft.solve import read_env_file
 from vo2mft.dos import Dos, FindGaps
-from vo2mft.elHamiltonian import ElHamiltonian_Recip
 from vo2mft.plot_spectrum import plot_spectrum
 
 def phase_sample(base_env, num_Bs, num_Ts):
@@ -116,41 +115,58 @@ def _collect_BT_env_val(min_envs, val_name):
 
     return xs, ys, vals
 
-def _collect_BTgaps(min_envs, num_dos=500, n0=4):
-    xs, ys, gaps, dos_vals, E_vals = [], [], [], [], []
+def _collect_BTgaps(min_envs, npar, num_dos=3000, n0=8):
+    BTgap_args = []
     for this_env in min_envs:
-        # May not have found a solution for all envs.
-        if this_env == None:
+        BTgap_args.append((this_env, num_dos, n0))
+
+    pool_size = os.cpu_count()
+    if npar != None:
+        pool_size = npar
+
+    BTgap_result = None
+    with Pool() as pool:
+        BTgap_result = pool.starmap(_one_BTgap, BTgap_args)
+
+    xs, ys, gaps, dos_vals, E_vals = [], [], [], [], []
+    for this_result in BTgap_result:
+        if this_result == None:
             continue
-        # This env was solved -- add it to plot.
-        this_QJ_ion = QJ_ion(this_env)
-        Bratio = this_env["B"] / this_QJ_ion
-        Tratio = (1.0 / this_env["Beta"]) / this_QJ_ion
+        Bratio, Tratio, gap_norm, this_dos_vals, this_E_vals = this_result
         xs.append(Bratio)
         ys.append(Tratio)
-
-        def Hk(k):
-            return ElHamiltonian_Recip(this_env, k)
-
-        this_dos_vals, this_E_vals = Dos(Hk, num_dos, n0)
-        this_gaps = FindGaps(this_dos_vals, this_E_vals)
-
+        gaps.append(gap_norm)
         dos_vals.append(this_dos_vals)
         E_vals.append(this_E_vals)
 
-        if len(this_gaps) > 1:
-            print("WARNING: found more than one gap;")
-            print("assuming first gap is around E_F -- this may be incorrect.")
-
-        gap_size = None
-        if len(this_gaps) == 0:
-            gap_size = 0.0
-        else:
-            gap_size = this_gaps[0][1] - this_gaps[0][0]
-
-        gaps.append(gap_size / this_QJ_ion)
-
     return xs, ys, gaps, dos_vals, E_vals
+
+def _one_BTgap(this_env, num_dos, n0):
+    # May not have found a solution for all envs.
+    if this_env == None:
+        return None
+    # This env was solved -- add it to plot.
+    this_QJ_ion = QJ_ion(this_env)
+    Bratio = this_env["B"] / this_QJ_ion
+    Tratio = (1.0 / this_env["Beta"]) / this_QJ_ion
+
+    this_dos_vals, this_E_vals = Dos(this_env, num_dos, n0)
+    this_gaps = FindGaps(this_dos_vals, this_E_vals)
+
+    if len(this_gaps) > 1:
+        print("WARNING: found more than one gap;")
+        print("assuming first gap is around E_F -- this may be incorrect.")
+
+    gap_size = None
+    if len(this_gaps) == 0:
+        gap_size = 0.0
+    else:
+        gap_size = this_gaps[0][1] - this_gaps[0][0]
+
+    gap_norm = gap_size / this_QJ_ion
+
+    return (Bratio, Tratio, gap_norm, this_dos_vals, this_E_vals)
+
 
 def _dos_data_path(out_prefix):
     return out_prefix + "_dos_data"
@@ -259,7 +275,7 @@ def _main():
         if args.plot_spectrum:
             _plot_spectra(min_envs, args.out_prefix)
 
-        Bs, Ts, gaps, dos_vals, E_vals = _collect_BTgaps(min_envs)
+        Bs, Ts, gaps, dos_vals, E_vals = _collect_BTgaps(min_envs, args.npar)
         _make_val_diagram(Bs, Ts, gaps, "Gap / $q_J^{ion}$", args.out_prefix + "_gap")
 
         _save_dos(Bs, Ts, gaps, dos_vals, E_vals, args.out_prefix)

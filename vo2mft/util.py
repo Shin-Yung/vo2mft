@@ -9,6 +9,12 @@ def _solve_front_path():
     config = _load_config(config_path)
     return os.path.join(config["base_path"], "vo2solve", "vo2solve_front", "vo2solve_front")
 
+def _run_dos_path():
+    # TODO - avoid assumption that pwd = vo2mft/vo2mft.
+    config_path = "config"
+    config = _load_config(config_path)
+    return os.path.join(config["base_path"], "tetra_dos", "RunDosValues.out")
+
 def _load_config(config_path):
     config = {}
     with open(config_path, 'r') as fp:

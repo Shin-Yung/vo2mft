@@ -1,5 +1,5 @@
 import numpy as np
-from vo2mft.dos import _cubic_R
+from vo2mft.lattice import _cubic_R
 
 def ElHamiltonian_Recip(env, k):
     '''Calculate 4x4 electronic Hamiltonian H(k).

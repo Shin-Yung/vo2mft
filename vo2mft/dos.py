@@ -1,12 +1,56 @@
+from uuid import uuid4
+import subprocess
+import os
 import numpy as np
 from tetra.dos import DosValues_AllE
+from vo2mft.elHamiltonian import ElHamiltonian_Recip
+from vo2mft.lattice import _cubic_R
+from vo2mft.util import _run_dos_path
 
-def _cubic_R(a):
-    D = np.array([[a, 0.0, 0.0], [0.0, a, 0.0], [0.0, 0.0, a]])
-    R = 2.0 * np.pi * np.linalg.inv(D)
-    return R
+def Dos(env, num_dos, n0, use_ctetra=True):
+    '''Return two lists, dos_vals and E_vals. dos_vals contains the density
+    of states D(E) at num_dos energies E between the minimum and maximum energy
+    eigenvalues. E_vals contains the E values at which the corresponding element
+    of dos_vals was evaluated.
 
-def Dos(Hk, num_dos, n0, R=None):
+    n0 gives the number of k-points to use to obtain D(E).
+    '''
+    if not use_ctetra:
+        def Hk(k):
+            return ElHamiltonian_Recip(env, k)
+        return PytetraDos(Hk, num_dos, n0)
+
+    rundos_path = _run_dos_path()
+    out_name = str(uuid4())
+
+    rundos_call = [rundos_path, out_name, str(n0), str(num_dos), str(env["Tae"]), str(env["Tce"]),
+            str(env["Tbe"]), str(env["Tao"]), str(env["Tco"]), str(env["Tbo"]), str(env["EpsilonR"]),
+            str(env["EpsilonM"]), str(env["M"]), str(env["W"]), str(env["Mu"])]
+    subprocess.call(rundos_call)
+
+    dos_vals, E_vals = _get_dos_vals(out_name)
+    os.remove(out_name)
+
+    return dos_vals, E_vals
+
+def _get_dos_vals(dos_path):
+    dos_vals, E_vals = [], []
+    lines = None
+    with open(dos_path, 'r') as fp:
+        lines = fp.readlines()
+
+    for i, line in enumerate(lines):
+        # Skip header.
+        if i == 0:
+            continue
+
+        split = line.strip().split('\t')
+        E_vals.append(float(split[0]))
+        dos_vals.append(float(split[1]))
+
+    return dos_vals, E_vals
+
+def PytetraDos(Hk, num_dos, n0, R=None):
     '''Return two lists, dos_vals and E_vals. dos_vals contains the density
     of states D(E) at num_dos energies E between the minimum and maximum energy
     eigenvalues. E_vals contains the E values at which the corresponding element
