@@ -14,6 +14,11 @@ Requires tetra (Python implementation of tetrahedron method):
     cd ~
     git clone https://bitbucket.org/tflovorn/tetra.git
 
+Requires ctetra (C implementation of tetrahedron method):
+
+    git submodule init
+    git submodule update
+
 # Installation
 
 Get this repository:

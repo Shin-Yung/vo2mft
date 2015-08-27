@@ -1,0 +1,3 @@
+[submodule "tetra_dos/ctetra"]
+	path = tetra_dos/ctetra
+	url = https://bitbucket.org/tflovorn/ctetra.git
