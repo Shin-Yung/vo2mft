@@ -17,19 +17,37 @@ const zero_threshold = 1e-12
 
 type HoppingEV struct {
 	// Value of M for which the contained hopping e.v.'s have been calculated.
-	m_dae, m_dce, m_dbe, m_dao, m_dco, m_dbo float64
+	m_cached map[string]float64
+	// Value of W for which the contained hopping e.v.'s have been calculated.
+	w_cached map[string]float64
 	// Value of Mu for which the contained hopping e.v.'s have been calculated.
-	mu_dae, mu_dce, mu_dbe, mu_dao, mu_dco, mu_dbo float64
+	mu_cached map[string]float64
 	// If hopping e.v.'s have not been calculated yet, init = false.
-	init_dae, init_dce, init_dbe, init_dao, init_dco, init_dbo bool
+	init map[string]bool
 	// Hopping e.v.'s for even symmetry (pre-calculated).
 	dae, dce, dbe float64
 	// Hopping e.v.'s for odd symmetry (pre-calculated).
 	dao, dco, dbo float64
 }
 
+func NewHoppingEV() *HoppingEV {
+	names := []string{"dae", "dce", "dbe", "dao", "dco", "dbo"}
+
+	Ds := new(HoppingEV)
+	Ds.m_cached = make(map[string]float64)
+	Ds.w_cached = make(map[string]float64)
+	Ds.mu_cached = make(map[string]float64)
+	Ds.init = make(map[string]bool)
+
+	for _, name := range names {
+		Ds.init[name] = false
+	}
+
+	return Ds
+}
+
 func (Ds *HoppingEV) Dae(env *Environment) float64 {
-	if Ds.init_dae && (env.M == Ds.m_dae) && (env.Mu == Ds.mu_dae) {
+	if Ds.cacheOk(env, "dae") {
 		return Ds.dae
 	}
 	if !env.FiniteHoppings() {
@@ -55,15 +73,16 @@ func (Ds *HoppingEV) Dae(env *Environment) float64 {
 		panic("Expected real value for Dae, got finite imaginary part.")
 	}
 
-	Ds.init_dae = true
-	Ds.m_dae = env.M
-	Ds.mu_dae = env.Mu
+	Ds.init["dae"] = true
+	Ds.m_cached["dae"] = env.M
+	Ds.w_cached["dae"] = env.W
+	Ds.mu_cached["dae"] = env.Mu
 	Ds.dae = dae
 	return dae
 }
 
 func (Ds *HoppingEV) Dce(env *Environment) float64 {
-	if Ds.init_dce && (env.M == Ds.m_dce) && (env.Mu == Ds.mu_dce) {
+	if Ds.cacheOk(env, "dce") {
 		return Ds.dce
 	}
 	if !env.FiniteHoppings() {
@@ -89,15 +108,16 @@ func (Ds *HoppingEV) Dce(env *Environment) float64 {
 		panic("Expected real value for Dce, got finite imaginary part.")
 	}
 
-	Ds.init_dce = true
-	Ds.m_dce = env.M
-	Ds.mu_dce = env.Mu
+	Ds.init["dce"] = true
+	Ds.m_cached["dce"] = env.M
+	Ds.w_cached["dce"] = env.W
+	Ds.mu_cached["dce"] = env.Mu
 	Ds.dce = dce
 	return dce
 }
 
 func (Ds *HoppingEV) Dbe(env *Environment) float64 {
-	if Ds.init_dbe && (env.M == Ds.m_dbe) && (env.Mu == Ds.mu_dbe) {
+	if Ds.cacheOk(env, "dbe") {
 		return Ds.dbe
 	}
 	if !env.FiniteHoppings() {
@@ -110,15 +130,16 @@ func (Ds *HoppingEV) Dbe(env *Environment) float64 {
 	}
 	dbe := 0.5 * bzone.Avg(env.BZPointsPerDim, 3, inner)
 
-	Ds.init_dbe = true
-	Ds.m_dbe = env.M
-	Ds.mu_dbe = env.Mu
+	Ds.init["dbe"] = true
+	Ds.m_cached["dbe"] = env.M
+	Ds.w_cached["dbe"] = env.W
+	Ds.mu_cached["dbe"] = env.Mu
 	Ds.dbe = dbe
 	return dbe
 }
 
 func (Ds *HoppingEV) Dao(env *Environment) float64 {
-	if Ds.init_dao && (env.M == Ds.m_dao) && (env.Mu == Ds.mu_dao) {
+	if Ds.cacheOk(env, "dao") {
 		return Ds.dao
 	}
 	if !env.FiniteHoppings() {
@@ -146,15 +167,16 @@ func (Ds *HoppingEV) Dao(env *Environment) float64 {
 		panic("Expected real value for Dao, got finite imaginary part.")
 	}
 
-	Ds.init_dao = true
-	Ds.m_dao = env.M
-	Ds.mu_dao = env.Mu
+	Ds.init["dao"] = true
+	Ds.m_cached["dao"] = env.M
+	Ds.w_cached["dao"] = env.W
+	Ds.mu_cached["dao"] = env.Mu
 	Ds.dao = dao
 	return dao
 }
 
 func (Ds *HoppingEV) Dco(env *Environment) float64 {
-	if Ds.init_dco && (env.M == Ds.m_dco) && (env.Mu == Ds.mu_dco) {
+	if Ds.cacheOk(env, "dco") {
 		return Ds.dco
 	}
 	if !env.FiniteHoppings() {
@@ -181,15 +203,16 @@ func (Ds *HoppingEV) Dco(env *Environment) float64 {
 		panic("Expected real value for Dco, got finite imaginary part.")
 	}
 
-	Ds.init_dco = true
-	Ds.m_dco = env.M
-	Ds.mu_dco = env.Mu
+	Ds.init["dco"] = true
+	Ds.m_cached["dco"] = env.M
+	Ds.w_cached["dco"] = env.W
+	Ds.mu_cached["dco"] = env.Mu
 	Ds.dco = dco
 	return dco
 }
 
 func (Ds *HoppingEV) Dbo(env *Environment) float64 {
-	if Ds.init_dbo && (env.M == Ds.m_dbo) && (env.Mu == Ds.mu_dbo) {
+	if Ds.cacheOk(env, "dbo") {
 		return Ds.dbo
 	}
 	if !env.FiniteHoppings() {
@@ -203,11 +226,27 @@ func (Ds *HoppingEV) Dbo(env *Environment) float64 {
 	}
 	dbo := 0.5 * bzone.Avg(env.BZPointsPerDim, 3, inner)
 
-	Ds.init_dbo = true
-	Ds.m_dbo = env.M
-	Ds.mu_dbo = env.Mu
+	Ds.init["dbo"] = true
+	Ds.m_cached["dbo"] = env.M
+	Ds.w_cached["dbo"] = env.W
+	Ds.mu_cached["dbo"] = env.Mu
 	Ds.dbo = dbo
 	return dbo
+}
+
+// Return true iff the cached evaluation of the given D value is still
+// OK to use.
+func (Ds *HoppingEV) cacheOk(env *Environment, dname string) bool {
+	if !Ds.init[dname] {
+		return false
+	}
+	M_ok := env.M == Ds.m_cached[dname]
+	Mu_ok := env.Mu == Ds.mu_cached[dname]
+	// Possible to ignore W value here:
+	// If EpsilonR == EpsilonM, H(k) is independent of W.
+	W_ok := (env.W == Ds.w_cached[dname]) || (env.EpsilonR == env.EpsilonM)
+
+	return M_ok && Mu_ok && W_ok
 }
 
 // Convert to string by marshalling to JSON.

@@ -24,7 +24,7 @@ func main() {
 	out_path := args[1]
 
 	// Initialize Ds cache.
-	Ds := new(vo2solve.HoppingEV)
+	Ds := vo2solve.NewHoppingEV()
 
 	// Load Environment from in_path, then solve system
 	// (throw away result from Solve - env is modified in-place).

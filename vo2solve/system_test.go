@@ -55,7 +55,7 @@ func TestRegressionSolveSystem(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		Ds := new(HoppingEV)
+		Ds := NewHoppingEV()
 
 		// Set variables for this test.
 		setup := all_setup[i]
@@ -106,7 +106,7 @@ func TestSolveSystem(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	Ds := new(HoppingEV)
+	Ds := NewHoppingEV()
 	eps := 1e-6
 	result, err := MWMuSolve(env, Ds, eps, eps)
 	if err != nil {
@@ -122,7 +122,7 @@ func TestSolveSystemIons(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	Ds := new(HoppingEV)
+	Ds := NewHoppingEV()
 	eps := 1e-6
 	result, err := MWSolve(env, Ds, eps, eps)
 	if err != nil {
