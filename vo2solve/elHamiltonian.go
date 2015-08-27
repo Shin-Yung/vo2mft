@@ -10,7 +10,9 @@ import (
 )
 
 // Calculate 4x4 electronic Hamiltonian.
-// Assumes that k is scaled such that kx*a, ky*a, kz*c --> kx, ky, kz.
+// k is in the Cartesian basis, with each component scaled by the corresponding
+// lattice constant; i.e. k = (a kx, a ky, c kz) and a kx, a ky, c kz range
+// over [-pi, pi) and periodic copies of this interval.
 func ElHamiltonian(env *Environment, k vec.Vector) cmatrix.CMatrix {
 	KQ := vec.Vector{math.Pi, math.Pi, math.Pi}
 	k.Add(&KQ) // now KQ = k + Q
