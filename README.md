@@ -14,7 +14,7 @@ Requires tetra (Python implementation of tetrahedron method):
     cd ~
     git clone https://bitbucket.org/tflovorn/tetra.git
 
-Requires ctetra (C implementation of tetrahedron method):
+Requires ctetra (C implementation of tetrahedron method) and bstrlib:
 
     git submodule init
     git submodule update

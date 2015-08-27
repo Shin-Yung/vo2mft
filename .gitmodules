@@ -1,3 +1,6 @@
 [submodule "tetra_dos/ctetra"]
 	path = tetra_dos/ctetra
 	url = https://bitbucket.org/tflovorn/ctetra.git
+[submodule "tetra_dos/bstrlib"]
+	path = tetra_dos/bstrlib
+	url = https://github.com/websnarf/bstrlib.git
