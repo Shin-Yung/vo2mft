@@ -3,13 +3,11 @@
 // Set H equal to the 4x4 electronic Hamiltonian H(k).
 // k is in the reciprocal lattice basis (i.e. k = (k_1, k_2, k_3) with
 // corresponding Cartesian representation k_Cart = k_1 b_1 + k_2 b_2 + k_3 b_3).
-void ElHamiltonian_Recip(Environment *env, gsl_vector *k, gsl_matrix_complex *H) {
+void ElHamiltonian_Recip(Environment *env, double k[3], gsl_matrix_complex *H) {
     // k --> 2*pi*k
-    double ki;
     int i;
     for (i = 0; i < 3; i++) {
-        ki = gsl_vector_get(k, i);
-        gsl_vector_set(k, i, 2.0*M_PI*ki);
+        k[i] = 2.0*M_PI*k[i];
     }
     ElHamiltonian(env, k, H);
 }
@@ -18,10 +16,10 @@ void ElHamiltonian_Recip(Environment *env, gsl_vector *k, gsl_matrix_complex *H)
 // k is in the Cartesian basis, with each component scaled by the corresponding
 // lattice constant; i.e. k = (a kx, a ky, c kz) and a kx, a ky, c kz range
 // over [-pi, pi) and periodic copies of this interval.
-void ElHamiltonian(Environment *env, gsl_vector *k, gsl_matrix_complex *H) {
-    double kx = gsl_vector_get(k, 0);
-    double ky = gsl_vector_get(k, 1);
-    double kz = gsl_vector_get(k, 2);
+void ElHamiltonian(Environment *env, double k[3], gsl_matrix_complex *H) {
+    double kx = k[0];
+    double ky = k[1];
+    double kz = k[2];
 
     // Functions of k.
 	gsl_complex EpsAE = EpsilonAE(env, k);
@@ -35,11 +33,9 @@ void ElHamiltonian(Environment *env, gsl_vector *k, gsl_matrix_complex *H) {
 
     // Functions of k + Q.
     // k --> k + Q
-    double ki;
     int i;
     for (i = 0; i < 3; i++) {
-        ki = gsl_vector_get(k, i);
-        gsl_vector_set(k, i, ki + M_PI);
+        k[i] = k[i] + M_PI;
     }
 	gsl_complex EpsBE_KQ = EpsilonBE(env, k);
 
@@ -70,37 +66,37 @@ void ElHamiltonian(Environment *env, gsl_vector *k, gsl_matrix_complex *H) {
 }
 
 // Cubic axes, even symmetry (k, p; k, p)
-gsl_complex EpsilonAE(Environment *env, gsl_vector *k) {
-    double kx = gsl_vector_get(k, 0);
-    double ky = gsl_vector_get(k, 1);
-    double kz = gsl_vector_get(k, 2);
+gsl_complex EpsilonAE(Environment *env, double k[3]) {
+    double kx = k[0];
+    double ky = k[1];
+    double kz = k[2];
     double rp = -2.0 * (env->Tae*(gsl_sf_cos(kx)+gsl_sf_cos(ky)) + env->Tce*gsl_sf_cos(kz));
     return gsl_complex_rect(rp, 0.0);
 }
 
 // Body diagonal, even symmetry (k, p; k, pbar)
-gsl_complex EpsilonBE(Environment *env, gsl_vector *k) {
-    double kx = gsl_vector_get(k, 0);
-    double ky = gsl_vector_get(k, 1);
-    double kz = gsl_vector_get(k, 2);
+gsl_complex EpsilonBE(Environment *env, double k[3]) {
+    double kx = k[0];
+    double ky = k[1];
+    double kz = k[2];
     double rp = -8.0 * env->Tbe * gsl_sf_cos(kx/2.0) * gsl_sf_cos(ky/2.0) * gsl_sf_cos(kz/2.0);
     return gsl_complex_rect(rp, 0.0);
 }
 
 // Cubic axes, odd symmetry (k, p; k+Q, p)
-gsl_complex EpsilonAO(Environment *env, gsl_vector *k) {
-    double kx = gsl_vector_get(k, 0);
-    double ky = gsl_vector_get(k, 1);
-    double kz = gsl_vector_get(k, 2);
+gsl_complex EpsilonAO(Environment *env, double k[3]) {
+    double kx = k[0];
+    double ky = k[1];
+    double kz = k[2];
     double ip = -2.0 * env->M * (env->Tao*(gsl_sf_sin(kx)+gsl_sf_sin(ky)) + env->Tco*gsl_sf_sin(kz));
     return gsl_complex_rect(0.0, ip);
 }
 
 // Body diagonal, odd symmetry (k, p; k+Q, pbar)
-gsl_complex EpsilonBO(Environment *env, gsl_vector *k) {
-    double kx = gsl_vector_get(k, 0);
-    double ky = gsl_vector_get(k, 1);
-    double kz = gsl_vector_get(k, 2);
+gsl_complex EpsilonBO(Environment *env, double k[3]) {
+    double kx = k[0];
+    double ky = k[1];
+    double kz = k[2];
 	double rp = -8.0 * env->M * env->Tbo * gsl_sf_cos(kx/2.0) * gsl_sf_cos(ky/2.0) * gsl_sf_cos(kz/2.0);
 	double ip = 8.0 * env->M * env->Tbo * gsl_sf_sin(kx/2.0) * gsl_sf_sin(ky/2.0) * gsl_sf_sin(kz/2.0);
     return gsl_complex_rect(rp, ip);
