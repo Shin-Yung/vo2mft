@@ -219,8 +219,11 @@ def _make_BT_plot(min_envs, out_prefix, env_val, env_val_label):
     Bs, Ts, Ms = _collect_BT_env_val(min_envs, env_val)
     _make_val_diagram(Bs, Ts, Ms, env_val_label, "{}_{}".format(out_prefix, env_val))
 
-def _plot_dos(Bs, Ts, dos_vals, E_vals, out_prefix):
+def _plot_dos(Bs, Ts, dos_vals, E_vals, out_prefix, only_B, only_T):
     for B, T, dos, Es in zip(Bs, Ts, dos_vals, E_vals):
+        if not _check_only_ok(B, T, only_B, only_T):
+            continue
+
         out_name = out_prefix + "_B_{}_T_{}_dos.png".format(str(B), str(T))
 
         plt.xlabel("$E$")
@@ -233,14 +236,27 @@ def _plot_dos(Bs, Ts, dos_vals, E_vals, out_prefix):
         plt.savefig(out_name, bbox_inches='tight', dpi=500)
         plt.clf()
 
-def _plot_spectra(min_envs, out_prefix):
+def _plot_spectra(min_envs, out_prefix, only_B, only_T):
     for env in min_envs:
         B, Beta = env["B"], env["Beta"]
         T = 1.0/Beta
         this_QJ_ion = QJ_ion(env)
         Bratio, Tratio = B / this_QJ_ion, T / this_QJ_ion
+
+        if not _check_only_ok(Bratio, Tratio, only_B, only_T):
+            continue
+
         out_name = out_prefix + "_B_{}_T_{}_spectrum".format(str(Bratio), str(Tratio))
         plot_spectrum(env, out_name)
+
+def _check_only_ok(Bratio, Tratio, only_B, only_T):
+    if only_B != None and only_T != None:
+        eps = 1e-9
+        b_ok = abs(Bratio - only_B) < eps
+        T_ok = abs(Tratio - only_T) < eps
+        return b_ok and T_ok
+    else:
+        return True
 
 def _main():
     parser = ArgumentParser(description="Construct phase diagram")
@@ -261,6 +277,10 @@ def _main():
             help="If specified, plot spectrum for each (B, T) point")
     parser.add_argument('--plot_dos', action='store_true',
             help="If specified, plot DOS for each (B, T) point")
+    parser.add_argument('--only_B', type=float, default=None,
+            help="If specified with only_T and plot_spectrum or plot_dos, make the spectrum or dos plots only for the given (B, T) point")
+    parser.add_argument('--only_T', type=float, default=None,
+            help="If specified with only_B and plot_spectrum or plot_dos, make the spectrum or dos plots only for the given (B, T) point")
     args = parser.parse_args()
 
     # TODO -- add only_B, only_T options to fix (B, T) point for generating
@@ -289,7 +309,7 @@ def _main():
         _make_BT_plot(min_envs, args.out_prefix, "Dbo", "$D_{bo}$")
 
         if args.plot_spectrum:
-            _plot_spectra(min_envs, args.out_prefix)
+            _plot_spectra(min_envs, args.out_prefix, args.only_B, args.only_T)
 
         Bs, Ts, gaps, dos_vals, E_vals = None, None, None, None, None
         if args.read_prefix == None:
@@ -301,7 +321,7 @@ def _main():
         _make_val_diagram(Bs, Ts, gaps, "Gap / $q_J^{ion}$", args.out_prefix + "_gap")
 
         if args.plot_dos:
-            _plot_dos(Bs, Ts, dos_vals, E_vals, args.out_prefix)
+            _plot_dos(Bs, Ts, dos_vals, E_vals, args.out_prefix, args.only_B, args.only_T)
 
 if __name__ == "__main__":
     _main()
