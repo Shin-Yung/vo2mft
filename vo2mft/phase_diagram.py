@@ -172,13 +172,29 @@ def _dos_data_path(out_prefix):
     return out_prefix + "_dos_data"
 
 def _save_dos(Bs, Ts, gaps, dos_vals, E_vals, out_prefix):
-    dos_data = []
-    for B, T, gap, this_dos_vals, this_E_vals in zip(Bs, Ts, gaps, dos_vals, E_vals):
-        dos_dict = {"B": B, "T": T, "dos_vals": this_dos_vals, "E_vals": list(this_E_vals)}
-        dos_data.append(json.dumps(dos_dict))
-
+    i = 0
     with open(_dos_data_path(out_prefix), 'w') as fp:
-        fp.write('\n'.join(dos_data))
+        for B, T, gap, this_dos_vals, this_E_vals in zip(Bs, Ts, gaps, dos_vals, E_vals):
+            i += 1
+            dos_dict = {"B": B, "T": T, "gap":gap, "dos_vals": this_dos_vals, "E_vals": list(this_E_vals)}
+            dos_data = json.dumps(dos_dict)
+            if i < len(Bs):
+                fp.write(dos_data + "\n")
+            else:
+                fp.write(dos_data)
+
+def _read_dos(prefix):
+    Bs, Ts, gaps, dos_vals, E_vals = [], [], [], [], []
+    with open(_dos_data_path(prefix), 'r') as fp:
+        for i, line in enumerate(fp):
+            dos_dict = json.loads(line.strip())
+            Bs.append(dos_dict["B"])
+            Ts.append(dos_dict["T"])
+            dos_vals.append(dos_dict["dos_vals"])
+            E_vals.append(dos_dict["E_vals"])
+            gaps.append(dos_dict["gap"])
+
+    return Bs, Ts, gaps, dos_vals, E_vals
 
 def _make_val_diagram(Bs, Ts, vals, val_label, out_prefix):
     plt.xlabel("$b/q_J^{ion}$", fontsize='x-large')
@@ -275,10 +291,15 @@ def _main():
         if args.plot_spectrum:
             _plot_spectra(min_envs, args.out_prefix)
 
-        Bs, Ts, gaps, dos_vals, E_vals = _collect_BTgaps(min_envs, args.npar)
+        Bs, Ts, gaps, dos_vals, E_vals = None, None, None, None, None
+        if args.read_prefix == None:
+            Bs, Ts, gaps, dos_vals, E_vals = _collect_BTgaps(min_envs, args.npar)
+            _save_dos(Bs, Ts, gaps, dos_vals, E_vals, args.out_prefix)
+        else:
+            Bs, Ts, gaps, dos_vals, E_vals = _read_dos(args.read_prefix)
+
         _make_val_diagram(Bs, Ts, gaps, "Gap / $q_J^{ion}$", args.out_prefix + "_gap")
 
-        _save_dos(Bs, Ts, gaps, dos_vals, E_vals, args.out_prefix)
         if args.plot_dos:
             _plot_dos(Bs, Ts, dos_vals, E_vals, args.out_prefix)
 
