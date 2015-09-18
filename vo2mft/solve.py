@@ -2,22 +2,26 @@ import subprocess
 import os
 import json
 from uuid import uuid4
-from vo2mft.util import _solve_front_path
+from vo2mft.util import _solve_front_path, _twodof_solve_front_path
 
-def solve(env, eps=1e-6, ions=False):
+def solve(env, eps=1e-6, ions=False, twodof=False):
     '''Return the solved final env corresponding to the given env, solved to
     accuracy given by eps.
     '''
     solver_path = _solve_front_path()
+    if twodof:
+        solver_path = _twodof_solve_front_path()
+
     in_path, out_path = str(uuid4()), str(uuid4())
 
     write_env_file(env, in_path)
 
     # Run solver.
     solver_call = None
-    if not ions:
+    if (not ions) or twodof:
         solver_call = [solver_path, "--eps", str(eps), in_path, out_path]
-    else:
+    elif ions and not twodof:
+        # NOTE for now, only have ionic system for twodof (no ions arg)
         solver_call = [solver_path, "--eps", str(eps), "--ions", in_path, out_path]
     subprocess.call(solver_call)
 
@@ -38,7 +42,7 @@ def solve(env, eps=1e-6, ions=False):
 
     return final_env
 
-def solve_set(envs, eps=1e-6, ions=False):
+def solve_set(envs, eps=1e-6, ions=False, twodof=False):
     '''Return a list of solved final envs corresponding to the given list of
     envs, solved to accuracy given by eps.
 
@@ -46,7 +50,7 @@ def solve_set(envs, eps=1e-6, ions=False):
     '''
     final_envs = []
     for initial_env in envs:
-        this_final_env = solve(initial_env, eps, ions)
+        this_final_env = solve(initial_env, eps, ions, twodof)
         final_envs.append(this_final_env)
     return final_envs
 
