@@ -31,6 +31,20 @@ Add GOPATH to ~/.bashrc:
 
     export GOPATH=$HOME/gopath
 
+Build the solver:
+
+    cd vo2solve/vo2solve_front/
+    go build
+    cd ../..
+
+Build the DOS calculator:
+
+    cd tetra_dos/ctetra
+    make
+    cd ..
+    make
+    cd ..
+
 Get setuptools and install using setup.py:
 
     sudo apt-get install python3-setuptools
@@ -42,7 +56,7 @@ To have changes to the source reflected immediately instead:
 
     sudo python3 setup.py develop
 
-To run setup.py without root, create ~/local and add $HOME/local to $PYTHONPATH.
-Then run setup.py with:
+-- To run setup.py without root, create ~/local and add $HOME/local to $PYTHONPATH.
+-- Then run setup.py with:
 
     python3 setup.py install --prefix "/home/username/local"
