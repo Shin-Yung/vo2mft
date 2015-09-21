@@ -2,15 +2,17 @@ import subprocess
 import os
 import json
 from uuid import uuid4
-from vo2mft.util import _solve_front_path, _twodof_solve_front_path
+from vo2mft.util import _solve_front_path, _twodof_solve_front_path, _twodof_body_fixed_solve_front_path
 
-def solve(env, eps=1e-6, ions=False, twodof=False, flags=None):
+def solve(env, eps=1e-6, ions=False, flags=None, twodof=False, twodof_body_indep=False):
     '''Return the solved final env corresponding to the given env, solved to
     accuracy given by eps.
     '''
     solver_path = _solve_front_path()
-    if twodof:
+    if twodof and twodof_body_indep:
         solver_path = _twodof_solve_front_path()
+    elif twodof:
+        solver_path = _twodof_body_fixed_solve_front_path()
 
     in_path, out_path = str(uuid4()), str(uuid4())
 
@@ -18,13 +20,14 @@ def solve(env, eps=1e-6, ions=False, twodof=False, flags=None):
 
     # Run solver.
     solver_call = None
-    if (not ions) or twodof:
+    if twodof:
         solver_call = [solver_path, "--eps", str(eps)]
+        if ions:
+            solver_call.append("--ions")
         if flags != None:
             solver_call.extend(flags)
         solver_call.extend([in_path, out_path])
     elif ions and not twodof:
-        # NOTE for now, only have ionic system for twodof (no ions arg)
         solver_call = [solver_path, "--eps", str(eps), "--ions"]
         if flags != None:
             solver_call.extend(flags)
@@ -48,7 +51,7 @@ def solve(env, eps=1e-6, ions=False, twodof=False, flags=None):
 
     return final_env
 
-def solve_set(envs, eps=1e-6, ions=False, twodof=False, flags=None):
+def solve_set(envs, eps=1e-6, ions=False, flags=None, twodof=False, twodof_body_indep=False):
     '''Return a list of solved final envs corresponding to the given list of
     envs, solved to accuracy given by eps.
 
@@ -59,7 +62,7 @@ def solve_set(envs, eps=1e-6, ions=False, twodof=False, flags=None):
         this_flags = None
         if flags != None:
             this_flags = flags[i]
-        this_final_env = solve(initial_env, eps, ions, twodof, this_flags)
+        this_final_env = solve(initial_env, eps, ions, this_flags, twodof, twodof_body_indep)
         final_envs.append(this_final_env)
     return final_envs
 

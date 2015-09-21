@@ -1,7 +1,7 @@
 from copy import deepcopy
 from vo2mft.solve import solve_set
 
-def minimize_free_energy(env, eps=1e-6, ions=False, twodof=False):
+def minimize_free_energy(env, eps=1e-6, ions=False, twodof=False, twodof_body_indep=False):
     '''Vary the initial conditions of env to find the solution which
     minimizes the free energy. Return the minimum free energy env and
     a list of all the solved envs.
@@ -11,7 +11,7 @@ def minimize_free_energy(env, eps=1e-6, ions=False, twodof=False):
     initial_conds, flags = None, None
     if not twodof:
         initial_conds = [{"M": 0.01, "W":0.01}, {"M":1.0, "W":1.0}]
-    else:
+    elif twodof and twodof_body_indep:
         initial_conds = [{"M01": 1.0, "M11": 1.0, "M02": 1.0, "M12": 1.0},
                 {"M01": 1.0, "M11": 1.0, "M02": 1.0, "M12": 1.0},
                 {"M01": 1.0, "M11": 1.0, "M02": 1.0, "M12": 1.0},
@@ -19,6 +19,10 @@ def minimize_free_energy(env, eps=1e-6, ions=False, twodof=False):
                 {"M01": 1.0, "M11": 1.0, "M02": 1.0, "M12": 1.0}]
         flags = [[], ["--m01_0", "--m11_0", "--m02_0", "--m12_0"],
                 ["--m02_0", "--m12_0"], ["--m12_0"], ["--m02_0"]]
+    else:
+        initial_conds = [{"M01": 1.0, "M02": 1.0}, {"M01": 1.0, "M02": 1.0},
+                {"M01": 1.0, "M02": 1.0}]
+        flags = [[], ["--m01_0", "--m02_0"], ["--m02_0"]]
 
     # Set up envs with specified set of initial conditions.
     initial_envs = []
@@ -29,7 +33,7 @@ def minimize_free_energy(env, eps=1e-6, ions=False, twodof=False):
         initial_envs.append(this_initial_env)
 
     # Solve envs.
-    final_envs = solve_set(initial_envs, eps, ions, twodof, flags)
+    final_envs = solve_set(initial_envs, eps, ions, flags, twodof, twodof_body_indep)
     #print(final_envs)
 
     # Find env with minimum free energy.

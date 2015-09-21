@@ -10,6 +10,7 @@ import (
 )
 
 var eps = flag.Float64("eps", 1e-6, "Converged when error below eps")
+var ions = flag.Bool("ions", false, "Solve only ionic system")
 var m01_0 = flag.Bool("m01_0", false, "Fix m_01 = 0")
 var m11_0 = flag.Bool("m11_0", false, "Fix m_11 = 0")
 var m02_0 = flag.Bool("m02_0", false, "Fix m_02 = 0")
@@ -28,37 +29,67 @@ func main() {
 	in_path := args[0]
 	out_path := args[1]
 
+	Ds := twodof.NewHoppingEV()
+
 	// Load Environment from in_path, then solve system
 	// (throw away result from Solve - env is modified in-place).
 	var solved_env *twodof.Environment
-	env, err := twodof.LoadEnv(in_path)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+	if !*ions {
+		env, err := twodof.LoadEnv(in_path)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
 
-	if *m01_0 {
-		env.M01 = 0.0
-	}
-	if *m11_0 {
-		env.M11 = 0.0
-	}
-	if *m02_0 {
-		env.M02 = 0.0
-	}
-	if *m12_0 {
-		env.M12 = 0.0
-	}
+		if *m01_0 {
+			env.M01 = 0.0
+		}
+		if *m11_0 {
+			env.M11 = 0.0
+		}
+		if *m02_0 {
+			env.M02 = 0.0
+		}
+		if *m12_0 {
+			env.M12 = 0.0
+		}
 
-	_, err = twodof.MSolve(env, *eps, *eps, *m01_0, *m11_0, *m02_0, *m12_0)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		_, err = twodof.MMuSolve(env, Ds, *eps, *eps, *m01_0, *m11_0, *m02_0, *m12_0)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		solved_env = env
+	} else {
+		env, err := twodof.LoadIonEnv(in_path)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		if *m01_0 {
+			env.M01 = 0.0
+		}
+		if *m11_0 {
+			env.M11 = 0.0
+		}
+		if *m02_0 {
+			env.M02 = 0.0
+		}
+		if *m12_0 {
+			env.M12 = 0.0
+		}
+
+		_, err = twodof.MSolve(env, Ds, *eps, *eps, *m01_0, *m11_0, *m02_0, *m12_0)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		solved_env = env
 	}
-	solved_env = env
 
 	// Calculate additional data for export from solved Environment.
-	fenv := twodof.NewFinalEnvironment(solved_env)
+	fenv := twodof.NewFinalEnvironment(solved_env, Ds)
 
 	// Write output system.
 	fenv_out_buf := bytes.NewBufferString(fenv.Marshal())

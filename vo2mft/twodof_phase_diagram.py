@@ -44,8 +44,8 @@ def min_envs_from_sample(sample_envs, ions, npar):
     eps = 1e-6
     sample_env_eps = []
     for env in sample_envs:
-        twodof = True
-        sample_env_eps.append((env, eps, ions, twodof))
+        twodof, twodof_body_indep = True, True
+        sample_env_eps.append((env, eps, ions, twodof, twodof_body_indep))
 
     # Find minimal free energy solutions of sample_envs in parallel.
     # Pool() uses number of workers = os.cpu_count() by default.
@@ -173,9 +173,6 @@ def _main():
             help="If specified with only_B and plot_spectrum or plot_dos, make the spectrum or dos plots only for the given (B, T) point")
     args = parser.parse_args()
 
-    # NOTE for now, only have ionic system.
-    args.ions = True
-
     # TODO -- add only_B, only_T options to fix (B, T) point for generating
     # a few spectra/dos
 
@@ -193,6 +190,7 @@ def _main():
     _make_BT_plot(min_envs, args.out_prefix, "M11", "$m_{1,1}$")
     _make_BT_plot(min_envs, args.out_prefix, "M02", "$m_{0,2}$")
     _make_BT_plot(min_envs, args.out_prefix, "M12", "$m_{1,2}$")
+    _make_BT_plot(min_envs, args.out_prefix, "Mu", "$\mu$")
     #_make_BT_plot(min_envs, args.out_prefix, "W", "$w$") # need to add to fenv
 
     _make_BT_plot(min_envs, args.out_prefix, "FreeEnergy", "$F$")
