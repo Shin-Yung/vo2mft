@@ -8,15 +8,17 @@ def minimize_free_energy(env, eps=1e-6, ions=False, twodof=False):
     '''
     # Set of initial conditions to consider.
     # TODO - may need to expand this.
-    initial_conds = None
+    initial_conds, flags = None, None
     if not twodof:
         initial_conds = [{"M": 0.01, "W":0.01}, {"M":1.0, "W":1.0}]
     else:
         initial_conds = [{"M01": 1.0, "M11": 1.0, "M02": 1.0, "M12": 1.0},
-                {"M01": 0.01, "M11": 0.01, "M02": 0.01, "M12": 0.01},
-                {"M01": 1.0, "M11": 1.0, "M02": 0.01, "M12": 0.01},
-                {"M01": 1.0, "M11": 1.0, "M02": 1.0, "M12": 0.01},
-                {"M01": 1.0, "M11": 1.0, "M02": 0.01, "M12": 1.0}]
+                {"M01": 1.0, "M11": 1.0, "M02": 1.0, "M12": 1.0},
+                {"M01": 1.0, "M11": 1.0, "M02": 1.0, "M12": 1.0},
+                {"M01": 1.0, "M11": 1.0, "M02": 1.0, "M12": 1.0},
+                {"M01": 1.0, "M11": 1.0, "M02": 1.0, "M12": 1.0}]
+        flags = [[], ["--m01_0", "--m11_0", "--m02_0", "--m12_0"],
+                ["--m02_0", "--m12_0"], ["--m12_0"], ["--m02_0"]]
 
     # Set up envs with specified set of initial conditions.
     initial_envs = []
@@ -27,7 +29,7 @@ def minimize_free_energy(env, eps=1e-6, ions=False, twodof=False):
         initial_envs.append(this_initial_env)
 
     # Solve envs.
-    final_envs = solve_set(initial_envs, eps, ions, twodof)
+    final_envs = solve_set(initial_envs, eps, ions, twodof, flags)
     #print(final_envs)
 
     # Find env with minimum free energy.

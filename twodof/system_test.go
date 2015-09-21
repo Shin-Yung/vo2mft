@@ -16,7 +16,7 @@ func TestSolveSystem(t *testing.T) {
 		t.Fatal(err)
 	}
 	eps := 1e-9
-	result, err := MSolve(env, eps, eps)
+	result, err := MSolve(env, eps, eps, false, false, false, false)
 	if err != nil {
 		t.Fatal(err)
 	}

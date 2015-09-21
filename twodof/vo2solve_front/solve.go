@@ -10,6 +10,10 @@ import (
 )
 
 var eps = flag.Float64("eps", 1e-6, "Converged when error below eps")
+var m01_0 = flag.Bool("m01_0", false, "Fix m_01 = 0")
+var m11_0 = flag.Bool("m11_0", false, "Fix m_11 = 0")
+var m02_0 = flag.Bool("m02_0", false, "Fix m_02 = 0")
+var m12_0 = flag.Bool("m12_0", false, "Fix m_12 = 0")
 
 //var ions = flag.Bool("ions", false, "Solve only ionic system")
 
@@ -32,7 +36,21 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	_, err = twodof.MSolve(env, *eps, *eps)
+
+	if *m01_0 {
+		env.M01 = 0.0
+	}
+	if *m11_0 {
+		env.M11 = 0.0
+	}
+	if *m02_0 {
+		env.M02 = 0.0
+	}
+	if *m12_0 {
+		env.M12 = 0.0
+	}
+
+	_, err = twodof.MSolve(env, *eps, *eps, *m01_0, *m11_0, *m02_0, *m12_0)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
