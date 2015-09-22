@@ -98,7 +98,7 @@ def _save_all_envs(all_envs, prefix):
     with open(prefix + "_all_data", 'w') as fp:
         fp.write('\n'.join(all_envs_strl))
 
-def _collect_BT_env_val(min_envs, val_name):
+def _collect_BT_env_val(min_envs, val_name, func=None):
     xs, ys, vals = [], [], []
     for this_env in min_envs:
         # May not have found a solution for all envs.
@@ -110,11 +110,15 @@ def _collect_BT_env_val(min_envs, val_name):
         Tratio = (1.0 / this_env["Beta"]) / this_Jtot
         xs.append(Bratio)
         ys.append(Tratio)
-        vals.append(this_env[val_name])
+
+        if func == None:
+            vals.append(this_env[val_name])
+        else:
+            vals.append(func(this_env[val_name]))
 
     return xs, ys, vals
 
-def _make_val_diagram(Bs, Ts, vals, val_label, out_prefix):
+def _make_val_diagram(Bs, Ts, vals, val_label, out_prefix, cbar_format=None):
     plt.xlabel("$b_{xx}/J_{tot}$", fontsize='x-large')
     plt.ylabel("$T/J_{tot}$", fontsize='x-large')
     plt.title(val_label, fontsize='x-large')
@@ -126,7 +130,11 @@ def _make_val_diagram(Bs, Ts, vals, val_label, out_prefix):
     #plt.scatter(Bs, Ts, c=vals, cmap='gnuplot', s=15, edgecolors="none") # 100x100
     #plt.scatter(Bs, Ts, c=vals, cmap='Set1', s=15, edgecolors="none") # 100x100
     plt.scatter(Bs, Ts, c=vals, cmap='Paired', s=15, edgecolors="none") # 100x100
-    plt.colorbar()
+
+    if cbar_format != None:
+        plt.colorbar(format=cbar_format)
+    else:
+        plt.colorbar()
 
     if out_prefix == None:
         plt.show()
@@ -135,9 +143,9 @@ def _make_val_diagram(Bs, Ts, vals, val_label, out_prefix):
 
     plt.clf()
 
-def _make_BT_plot(min_envs, out_prefix, env_val, env_val_label):
-    Bs, Ts, Ms = _collect_BT_env_val(min_envs, env_val)
-    _make_val_diagram(Bs, Ts, Ms, env_val_label, "{}_{}".format(out_prefix, env_val))
+def _make_BT_plot(min_envs, out_prefix, env_val, env_val_label, func=None, cbar_format=None):
+    Bs, Ts, Ms = _collect_BT_env_val(min_envs, env_val, func)
+    _make_val_diagram(Bs, Ts, Ms, env_val_label, "{}_{}".format(out_prefix, env_val), cbar_format)
 
 def _check_only_ok(Bratio, Tratio, only_B, only_T):
     if only_B != None and only_T != None:
@@ -186,14 +194,19 @@ def _main():
     else:
         min_envs = _read_min_envs(args.read_prefix)
 
-    _make_BT_plot(min_envs, args.out_prefix, "M01", "$m_{0,1}$")
-    _make_BT_plot(min_envs, args.out_prefix, "M11", "$m_{1,1}$")
-    _make_BT_plot(min_envs, args.out_prefix, "M02", "$m_{0,2}$")
-    _make_BT_plot(min_envs, args.out_prefix, "M12", "$m_{1,2}$")
-    _make_BT_plot(min_envs, args.out_prefix, "Mu", "$\mu$")
+    _make_BT_plot(min_envs, args.out_prefix, "M01", "$|m_{0,1}|$", func=lambda x: abs(x), cbar_format="%.2f")
+    _make_BT_plot(min_envs, args.out_prefix, "M11", "$|m_{1,1}|$", func=lambda x: abs(x), cbar_format="%.2f")
+    _make_BT_plot(min_envs, args.out_prefix, "M02", "$|m_{0,2}|$", func=lambda x: abs(x), cbar_format="%.2f")
+    _make_BT_plot(min_envs, args.out_prefix, "M12", "$|m_{1,2}|$", func=lambda x: abs(x), cbar_format="%.2f")
+    _make_BT_plot(min_envs, args.out_prefix, "W01", "$w_{0,1}$", cbar_format="%.2f")
+    _make_BT_plot(min_envs, args.out_prefix, "W11", "$w_{1,1}$", cbar_format="%.2f")
+    _make_BT_plot(min_envs, args.out_prefix, "W02", "$w_{0,2}$", cbar_format="%.2f")
+    _make_BT_plot(min_envs, args.out_prefix, "W12", "$w_{1,2}$", cbar_format="%.2f")
     #_make_BT_plot(min_envs, args.out_prefix, "W", "$w$") # need to add to fenv
-
     _make_BT_plot(min_envs, args.out_prefix, "FreeEnergy", "$F$")
+
+    if not args.ions:
+        _make_BT_plot(min_envs, args.out_prefix, "Mu", "$\mu$")
 
 if __name__ == "__main__":
     _main()

@@ -54,7 +54,7 @@ func main() {
 			env.M12 = 0.0
 		}
 
-		_, err = twodof.MMuSolve(env, Ds, *eps, *eps, *m01_0, *m11_0, *m02_0, *m12_0)
+		_, err = twodof.MWMuSolve(env, Ds, *eps, *eps, *m01_0, *m11_0, *m02_0, *m12_0)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
@@ -80,7 +80,7 @@ func main() {
 			env.M12 = 0.0
 		}
 
-		_, err = twodof.MSolve(env, Ds, *eps, *eps, *m01_0, *m11_0, *m02_0, *m12_0)
+		_, err = twodof.MWSolve(env, Ds, *eps, *eps, *m01_0, *m11_0, *m02_0, *m12_0)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)

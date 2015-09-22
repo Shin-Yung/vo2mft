@@ -21,10 +21,12 @@ type Environment struct {
 	BZPointsPerDim int
 	// Order parameter <S_{p,alpha}>.
 	M01, M11, M02, M12 float64
+	// Order parameter <S^2_{p,alpha}>.
+	W01, W11, W02, W12 float64
 	// Inverse temperature, 1 / (k_B * T).
 	Beta float64
 	// One-spin term for BEG model: coefficient for (S_i)^2.
-	Bxy0, Bzz0 float64
+	Bxy0, Bzz0, Bxz0 float64
 	// Exchange parameters for BEG model: coefficients to S_i dot S_j.
 	// Jb is excluded since it does not contribute to results.
 	Jb0, Jc0 float64
@@ -45,6 +47,10 @@ func (env *Environment) Bxy() float64 {
 
 func (env *Environment) Bzz() float64 {
 	return env.Bzz0
+}
+
+func (env *Environment) Bxz() float64 {
+	return env.Bxz0
 }
 
 func (env *Environment) Jb() float64 {

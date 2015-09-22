@@ -18,7 +18,7 @@ func TestSolveSystem(t *testing.T) {
 	Ds := NewHoppingEV()
 
 	eps := 1e-9
-	result, err := MMuSolve(env, Ds, eps, eps, false, false, false, false)
+	result, err := MWMuSolve(env, Ds, eps, eps, false, false, false, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -35,7 +35,7 @@ func TestSolveSystemIons(t *testing.T) {
 	Ds := NewHoppingEV()
 
 	eps := 1e-9
-	result, err := MSolve(env, Ds, eps, eps, false, false, false, false)
+	result, err := MWSolve(env, Ds, eps, eps, false, false, false, false)
 	if err != nil {
 		t.Fatal(err)
 	}
