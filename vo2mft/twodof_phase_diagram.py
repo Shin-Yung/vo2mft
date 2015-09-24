@@ -30,10 +30,11 @@ def phase_sample(base_env, num_Bs, num_Ts):
             T_val = Tr*base_Jtot
             B_T_vals.append([B_val, T_val])
 
+    xy_zz_ratio = base_env["Bxy0"] / base_env["Bzz0"]
     sample_envs = []
     for B, T in B_T_vals:
         this_env = deepcopy(base_env)
-        this_env["Bxy0"] = B
+        this_env["Bxy0"] = xy_zz_ratio * B
         this_env["Bzz0"] = B
         this_env["Beta"] = 1.0/T
         sample_envs.append(this_env)
