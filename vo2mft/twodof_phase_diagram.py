@@ -5,7 +5,7 @@ import os
 import json
 import numpy as np
 import matplotlib.pyplot as plt
-from vo2mft.twodof_environment import Jtot
+from vo2mft.twodof_environment import Jbe
 from vo2mft.min_free_energy import minimize_free_energy
 from vo2mft.solve import read_env_file
 from vo2mft.dos import Dos, FindGaps
@@ -16,9 +16,12 @@ def phase_sample(base_env, num_Bs, num_Ts):
     with constant properties taken from base_env.
     '''
     # Generate set of (B, T) values.
-    base_Jtot = Jtot(base_env)
-    Bratio_start, Bratio_stop = 0.01, 0.7
-    Tratio_start, Tratio_stop = 0.01, 0.8
+    base_Jbe = Jbe(base_env)
+
+    #Bratio_start, Bratio_stop = 0.01, 0.7
+    #Tratio_start, Tratio_stop = 0.01, 0.8
+    Bratio_start, Bratio_stop = 0.01, 1.0
+    Tratio_start, Tratio_stop = 0.01, 1.0
 
     Bratios = np.linspace(Bratio_start, Bratio_stop, num_Bs)
     Tratios = np.linspace(Tratio_start, Tratio_stop, num_Ts)
@@ -26,8 +29,8 @@ def phase_sample(base_env, num_Bs, num_Ts):
     B_T_vals = []
     for Br in Bratios:
         for Tr in Tratios:
-            B_val = Br*base_Jtot
-            T_val = Tr*base_Jtot
+            B_val = Br*base_Jbe
+            T_val = Tr*base_Jbe
             B_T_vals.append([B_val, T_val])
 
     xy_zz_ratio = base_env["Bxy0"] / base_env["Bzz0"]
@@ -42,7 +45,7 @@ def phase_sample(base_env, num_Bs, num_Ts):
     return sample_envs
 
 def min_envs_from_sample(sample_envs, ions, npar):
-    eps = 1e-6
+    eps = 1e-8
     sample_env_eps = []
     for env in sample_envs:
         twodof, twodof_body_indep = True, True
@@ -106,9 +109,9 @@ def _collect_BT_env_val(min_envs, val_name, func=None):
         if this_env == None:
             continue
         # This env was solved -- add it to plot.
-        this_Jtot = Jtot(this_env)
-        Bratio = this_env["Bxy0"] / this_Jtot
-        Tratio = (1.0 / this_env["Beta"]) / this_Jtot
+        this_Jbe = Jbe(this_env)
+        Bratio = this_env["Bxy0"] / this_Jbe
+        Tratio = (1.0 / this_env["Beta"]) / this_Jbe
         xs.append(Bratio)
         ys.append(Tratio)
 
@@ -120,8 +123,8 @@ def _collect_BT_env_val(min_envs, val_name, func=None):
     return xs, ys, vals
 
 def _make_val_diagram(Bs, Ts, vals, val_label, out_prefix, cbar_format=None):
-    plt.xlabel("$b_{xx}/J_{tot}$", fontsize='x-large')
-    plt.ylabel("$T/J_{tot}$", fontsize='x-large')
+    plt.xlabel("$b_{xx}/4J_{b}$", fontsize='x-large')
+    plt.ylabel("$T/4J_{b}$", fontsize='x-large')
     plt.title(val_label, fontsize='x-large')
 
     plt.xlim(0.0, max(Bs))
