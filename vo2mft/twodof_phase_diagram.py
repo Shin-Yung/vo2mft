@@ -118,7 +118,16 @@ def _collect_BT_env_val(min_envs, val_name, func=None):
         if func == None:
             vals.append(this_env[val_name])
         else:
-            vals.append(func(this_env[val_name]))
+            if func == "abs":
+                vals.append(abs(this_env[val_name]))
+            elif func == "phase":
+                def phase_func(x):
+                    eps = 1e-6
+                    if abs(x) > eps:
+                        return 1.0
+                    else:
+                        return 0.0
+                vals.append(phase_func(this_env[val_name]))
 
     return xs, ys, vals
 
@@ -198,19 +207,32 @@ def _main():
     else:
         min_envs = _read_min_envs(args.read_prefix)
 
-    _make_BT_plot(min_envs, args.out_prefix, "M01", "$|m_{0,1}|$", func=lambda x: abs(x), cbar_format="%.2f")
-    _make_BT_plot(min_envs, args.out_prefix, "M11", "$|m_{1,1}|$", func=lambda x: abs(x), cbar_format="%.2f")
-    _make_BT_plot(min_envs, args.out_prefix, "M02", "$|m_{0,2}|$", func=lambda x: abs(x), cbar_format="%.2f")
-    _make_BT_plot(min_envs, args.out_prefix, "M12", "$|m_{1,2}|$", func=lambda x: abs(x), cbar_format="%.2f")
-    _make_BT_plot(min_envs, args.out_prefix, "W01", "$w_{0,1}$", cbar_format="%.2f")
-    _make_BT_plot(min_envs, args.out_prefix, "W11", "$w_{1,1}$", cbar_format="%.2f")
-    _make_BT_plot(min_envs, args.out_prefix, "W02", "$w_{0,2}$", cbar_format="%.2f")
-    _make_BT_plot(min_envs, args.out_prefix, "W12", "$w_{1,2}$", cbar_format="%.2f")
-    #_make_BT_plot(min_envs, args.out_prefix, "W", "$w$") # need to add to fenv
-    _make_BT_plot(min_envs, args.out_prefix, "FreeEnergy", "$F$")
+    M_plot_args = [[min_envs, args.out_prefix, "M01", "$|m_{0,1}|$", "abs", "%.2f"],
+        [min_envs, args.out_prefix, "M11", "$|m_{1,1}|$", "abs", "%.2f"],
+        [min_envs, args.out_prefix, "M02", "$|m_{0,2}|$", "abs", "%.2f"],
+        [min_envs, args.out_prefix, "M12", "$|m_{1,2}|$", "abs", "%.2f"]]
+
+    M_phase_plot_args = [[min_envs, args.out_prefix + "_phase", "M01", "$|m_{0,1}| > 0$", "phase", "%.2f"],
+        [min_envs, args.out_prefix + "_phase", "M11", "$|m_{1,1}| > 0$", "phase", "%.2f"],
+        [min_envs, args.out_prefix + "_phase", "M02", "$|m_{0,2}| > 0$", "phase", "%.2f"],
+        [min_envs, args.out_prefix + "_phase", "M12", "$|m_{1,2}| > 0$", "phase", "%.2f"]]
+
+    W_plot_args = [[min_envs, args.out_prefix, "W01", "$w_{0,1}$", None, "%.2f"],
+        [min_envs, args.out_prefix, "W11", "$w_{1,1}$", None, "%.2f"],
+        [min_envs, args.out_prefix, "W02", "$w_{0,2}$", None, "%.2f"],
+        [min_envs, args.out_prefix, "W12", "$w_{1,2}$", None, "%.2f"]]
+
+    plot_args = []
+    plot_args.extend(M_plot_args)
+    plot_args.extend(M_phase_plot_args)
+    plot_args.extend(W_plot_args)
+    plot_args.append([min_envs, args.out_prefix, "FreeEnergy", "$F$", None, None])
 
     if not args.ions:
-        _make_BT_plot(min_envs, args.out_prefix, "Mu", "$\mu$")
+        plot_args.append([min_envs, args.out_prefix, "Mu", "$\mu$", None, None])
+
+    with Pool() as pool:
+        pool.starmap(_make_BT_plot, plot_args)
 
 if __name__ == "__main__":
     _main()
