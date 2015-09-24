@@ -4,7 +4,7 @@ import json
 from uuid import uuid4
 from vo2mft.util import _solve_front_path, _twodof_solve_front_path, _twodof_body_fixed_solve_front_path
 
-def solve(env, eps=1e-6, ions=False, flags=None, twodof=False, twodof_body_indep=False):
+def solve(env, eps=1e-8, ions=False, flags=None, twodof=False, twodof_body_indep=False):
     '''Return the solved final env corresponding to the given env, solved to
     accuracy given by eps.
     '''
@@ -51,7 +51,7 @@ def solve(env, eps=1e-6, ions=False, flags=None, twodof=False, twodof_body_indep
 
     return final_env
 
-def solve_set(envs, eps=1e-6, ions=False, flags=None, twodof=False, twodof_body_indep=False):
+def solve_set(envs, eps=1e-8, ions=False, flags=None, twodof=False, twodof_body_indep=False):
     '''Return a list of solved final envs corresponding to the given list of
     envs, solved to accuracy given by eps.
 
