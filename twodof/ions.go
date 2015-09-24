@@ -42,21 +42,25 @@ func (env *Environment) Wpa(p, alpha int, Ds *HoppingEV) float64 {
 func (env *Environment) H_Ion(S []int, Ds *HoppingEV) float64 {
 	S01, S11, S02, S12 := float64(S[0]), float64(S[1]), float64(S[2]), float64(S[3])
 	Bxy, Bzz, Bxz, Jb, Jc := env.Bxy(), env.Bzz(), env.Bxz(), env.Jb(), env.Jc()
+	Kbe := 4.0 * env.Kb()
+	Kcxxe, Kczze, Kcxz := 2.0*env.Kcxx(), 2.0*env.Kczz(), env.Kcxz()
 	Dco := Ds.Dco(env)
 
-	S01_part := Bzz*S01*S01 + Bxz*S01*S01*env.W02 - (4.0*Jb*env.M11+2.0*Jc*env.M01+2.0*Dco)*S01
-	S11_part := Bxy*S11*S11 + Bxz*S11*S11*env.W12 - 4.0*Jb*env.M01*S11
-	S02_part := Bxy*S02*S02 + Bxz*S02*S02*env.W01 - 4.0*Jb*env.M12*S02
-	S12_part := Bzz*S12*S12 + Bxz*S12*S12*env.W11 - (4.0*Jb*env.M02+2.0*Jc*env.M12+2.0*Dco)*S12
+	S01_part := (Bzz+Bxz*env.W02+Kbe*env.W11+Kczze*env.W01+Kcxz*env.W02)*S01*S01 - (4.0*Jb*env.M11+2.0*Jc*env.M01+2.0*Dco)*S01
+	S11_part := (Bxy+Bxz*env.W12+Kbe*env.W01+Kcxxe*env.W11+Kcxz*env.W12)*S11*S11 - 4.0*Jb*env.M01*S11
+	S02_part := (Bxy+Bxz*env.W01+Kbe*env.W12+Kcxxe*env.W02+Kcxz*env.W01)*S02*S02 - 4.0*Jb*env.M12*S02
+	S12_part := (Bzz+Bxz*env.W11+Kbe*env.W02+Kczze*env.W12+Kcxz*env.W11)*S12*S12 - (4.0*Jb*env.M02+2.0*Jc*env.M12+2.0*Dco)*S12
 	return S01_part + S11_part + S02_part + S12_part
 }
 
 // Constant part of the ionic Hamiltonian (no S dependence).
 func (env *Environment) EConst_Ion() float64 {
-	dimer := env.Jc() * (math.Pow(env.M01, 2.0) + math.Pow(env.M12, 2.0))
+	dimer_quad := env.Jc() * (math.Pow(env.M01, 2.0) + math.Pow(env.M12, 2.0))
+	dimer_quart := -env.Kcxx()*(env.W02*env.W02+env.W11*env.W11) + env.Kczz()*(env.W01*env.W01+env.W12*env.W12) + env.Kcxz()*(env.W02*env.W01+env.W11*env.W12)
 	cb := 4.0 * env.Jb() * (env.M01*env.M11 + env.M02*env.M12)
+	ccbb := -4.0 * env.Kb() * (env.W01*env.W11 + env.W02*env.W12)
 	onsite := -env.Bxz() * (env.W01*env.W02 + env.W11*env.W12)
-	return dimer + cb + onsite
+	return dimer_quad + dimer_quart + cb + ccbb + onsite
 }
 
 // Constant part of the electron-ion Hamiltonian.

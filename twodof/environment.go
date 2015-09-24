@@ -30,6 +30,10 @@ type Environment struct {
 	// Exchange parameters for BEG model: coefficients to S_i dot S_j.
 	// Jb is excluded since it does not contribute to results.
 	Jb0, Jc0 float64
+	// Quartic contribution corresponding to Jb term.
+	Kb0 float64
+	// Quartic contributions along dimers.
+	Kcxx0, Kczz0, Kcxz0 float64
 	// Hopping along c axis. TODO - strain dependence.
 	Tce, Tco float64
 	// Hopping along body diagonal.
@@ -59,6 +63,22 @@ func (env *Environment) Jb() float64 {
 
 func (env *Environment) Jc() float64 {
 	return env.Jc0
+}
+
+func (env *Environment) Kb() float64 {
+	return env.Kb0
+}
+
+func (env *Environment) Kcxx() float64 {
+	return env.Kcxx0
+}
+
+func (env *Environment) Kczz() float64 {
+	return env.Kczz0
+}
+
+func (env *Environment) Kcxz() float64 {
+	return env.Kcxz0
 }
 
 // Are electronic hopping finite?
