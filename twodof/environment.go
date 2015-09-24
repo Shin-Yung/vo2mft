@@ -138,13 +138,15 @@ func (env *Environment) FreeEnergyIons(Ds *HoppingEV) float64 {
 }
 
 func (env *Environment) FreeEnergyElectrons() float64 {
+	H := cmatrix.NewCMatrixGSL(4, 4)
+	work, evals, evecs := cmatrix.HermEigensystemSetup(H)
 	inner := func(k vec.Vector) float64 {
-		H := ElHamiltonian(env, k)
+		ElHamiltonian(env, k, H)
 		dim, _ := H.Dims()
-		evals, _ := cmatrix.Eigensystem(H)
+		cmatrix.HermEigensystem(H, work, evals, evecs)
 		sum := 0.0
 		for alpha := 0; alpha < dim; alpha++ {
-			eps_ka := evals[alpha]
+			eps_ka := evals.At(alpha)
 			// Mu excluded from exp argument here since it is
 			// included in H.
 			val := 1.0 + math.Exp(-env.Beta*eps_ka)
@@ -157,6 +159,8 @@ func (env *Environment) FreeEnergyElectrons() float64 {
 	T := 1.0 / env.Beta
 	band_part := -T * bzone.Avg(L, 3, inner)
 
+	H.Destroy()
+	cmatrix.HermEigensystemCleanup(work, evals, evecs)
 	return band_part
 }
 

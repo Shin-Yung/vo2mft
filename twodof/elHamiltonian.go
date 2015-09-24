@@ -13,7 +13,7 @@ import (
 // k is in the Cartesian basis, with each component scaled by the corresponding
 // lattice constant; i.e. k = (a kx, a ky, c kz) and a kx, a ky, c kz range
 // over [-pi, pi) and periodic copies of this interval.
-func ElHamiltonian(env *Environment, k vec.Vector) cmatrix.CMatrix {
+func ElHamiltonian(env *Environment, k vec.Vector, H *cmatrix.CMatrixGSL) {
 	KQ := vec.Vector{0.0, math.Pi, math.Pi}
 	k.Add(&KQ) // now KQ = k + Q
 
@@ -26,29 +26,25 @@ func ElHamiltonian(env *Environment, k vec.Vector) cmatrix.CMatrix {
 	m01 := complex(env.M01, 0.0)
 	m12 := complex(env.M12, 0.0)
 
-	H := cmatrix.InitSliceCMatrix(4, 4)
+	H.Set(0, 0, EpsAE+ident_part)
+	H.Set(1, 0, -m01*EpsAO)
+	H.Set(2, 0, cmplx.Conj(EpsBE))
+	H.Set(3, 0, 0.0)
 
-	H[0][0] = EpsAE + ident_part
-	H[1][0] = -m01 * EpsAO
-	H[2][0] = cmplx.Conj(EpsBE)
-	H[3][0] = 0.0
+	H.Set(0, 1, m01*EpsAO)
+	H.Set(1, 1, -EpsAE+ident_part)
+	H.Set(2, 1, 0.0)
+	H.Set(3, 1, cmplx.Conj(EpsBE_KQ))
 
-	H[0][1] = m01 * EpsAO
-	H[1][1] = -EpsAE + ident_part
-	H[2][1] = 0.0
-	H[3][1] = cmplx.Conj(EpsBE_KQ)
+	H.Set(0, 2, EpsBE)
+	H.Set(1, 2, 0.0)
+	H.Set(2, 2, EpsAE+ident_part)
+	H.Set(3, 2, -m12*EpsAO)
 
-	H[0][2] = EpsBE
-	H[1][2] = 0.0
-	H[2][2] = EpsAE + ident_part
-	H[3][2] = -m12 * EpsAO
-
-	H[0][3] = 0.0
-	H[1][3] = EpsBE_KQ
-	H[2][3] = m12 * EpsAO
-	H[3][3] = -EpsAE + ident_part
-
-	return H
+	H.Set(0, 3, 0.0)
+	H.Set(1, 3, EpsBE_KQ)
+	H.Set(2, 3, m12*EpsAO)
+	H.Set(3, 3, -EpsAE+ident_part)
 }
 
 // Cubic axes, even symmetry (k, p; k, p)
