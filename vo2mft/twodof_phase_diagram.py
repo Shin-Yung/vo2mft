@@ -142,7 +142,8 @@ def _make_val_diagram(Bs, Ts, vals, val_label, out_prefix, cbar_format=None):
     #plt.scatter(Bs, Ts, c=vals, cmap='gnuplot', s=100, edgecolors="none") # 10x10
     #plt.scatter(Bs, Ts, c=vals, cmap='gnuplot', s=15, edgecolors="none") # 100x100
     #plt.scatter(Bs, Ts, c=vals, cmap='Set1', s=15, edgecolors="none") # 100x100
-    plt.scatter(Bs, Ts, c=vals, cmap='Paired', s=15, edgecolors="none") # 100x100
+    #plt.scatter(Bs, Ts, c=vals, cmap='Paired', s=15, edgecolors="none") # 100x100
+    plt.scatter(Bs, Ts, c=vals, cmap='viridis', s=15, edgecolors="none") # 100x100
 
     if cbar_format != None:
         plt.colorbar(format=cbar_format)
@@ -159,6 +160,98 @@ def _make_val_diagram(Bs, Ts, vals, val_label, out_prefix, cbar_format=None):
 def _make_BT_plot(min_envs, out_prefix, env_val, env_val_label, func=None, cbar_format=None):
     Bs, Ts, Ms = _collect_BT_env_val(min_envs, env_val, func)
     _make_val_diagram(Bs, Ts, Ms, env_val_label, "{}_{}".format(out_prefix, env_val), cbar_format)
+
+def _multival_phase_plot(min_envs, out_prefix, env_val_1, env_val_2, val_label, func=None, cbar_format=None):
+    Bs, Ts, val1s = _collect_BT_env_val(min_envs, env_val_1, func=None)
+    Bs, Ts, val2s = _collect_BT_env_val(min_envs, env_val_2, func=None)
+    combined_vals = []
+
+    for val1, val2 in zip(val1s, val2s):
+        if func == "phase_incl_m2":
+            def phase_func(m1, m2):
+                eps = 1e-6
+                if abs(m1) > eps and abs(m2) > eps:
+                    return 1.0
+                elif (abs(m1) > eps and abs(m2) < eps) or (abs(m1) < eps and abs(m2) > eps):
+                    return 0.5
+                else:
+                    return 0.0
+            combined_vals.append(phase_func(val1, val2))
+        else:
+            raise ValueError("func unsupported")
+
+    _make_val_diagram(Bs, Ts, combined_vals, val_label, "{}_{}".format(out_prefix, val_label), cbar_format)
+
+def _near_M_b_cutoff_plot(min_envs, out_prefix, env_val_1, env_val_2, env_val_label_1, env_val_label_2, delta_B):
+    # Find B cutoff.
+    max_val_B = None
+    for this_env in min_envs:
+        if this_env == None:
+            continue
+        this_Jbe = Jbe(this_env)
+        Bratio = this_env["Bxy0"] / this_Jbe
+
+        eps = 1e-6
+        val_1 = this_env[env_val_1]
+        val_2 = this_env[env_val_2]
+
+        if abs(val_1) > eps or abs(val_2) > eps:
+            if max_val_B == None or Bratio > max_val_B:
+                max_val_B = Bratio
+
+    # Collect (T, val_1) and (T, val_2) for desired Bs.
+    B_val1_data, B_val2_data = {}, {}
+    for this_env in min_envs:
+        if this_env == None:
+            continue
+        this_Jbe = Jbe(this_env)
+        Bratio = this_env["Bxy0"] / this_Jbe
+        Tratio = (1.0 / this_env["Beta"]) / this_Jbe
+
+        if Bratio > max_val_B or max_val_B - Bratio > delta_B:
+            continue
+
+        if Bratio not in B_val1_data:
+            B_val1_data[Bratio] = []
+
+        if Bratio not in B_val2_data:
+            B_val2_data[Bratio] = []
+
+        val_1 = this_env[env_val_1]
+        val_2 = this_env[env_val_2]
+
+        B_val1_data[Bratio].append([Tratio, val_1])
+        B_val2_data[Bratio].append([Tratio, val_2])
+
+    # Sort data and make plots.
+    for B in B_val1_data.keys():
+        Ts_1, vals_1, Ts_2, vals_2 = [], [], [], []
+
+        val1_data = B_val1_data[B]
+        val2_data = B_val2_data[B]
+
+        sorted_val1 = sorted(val1_data, key=lambda x: x[0])
+        sorted_val2 = sorted(val2_data, key=lambda x: x[0])
+
+        for T, val in val1_data:
+            Ts_1.append(T)
+            vals_1.append(val)
+
+        for T, val in val2_data:
+            Ts_2.append(T)
+            vals_2.append(val)
+
+        plt.xlabel("$T/4J_{b}$", fontsize='x-large')
+
+        plt.ylim(min(min(vals_1), min(vals_2)), max(max(vals_1), max(vals_2)))
+
+        plt.plot(Ts_1, vals_1, label=env_val_label_1)
+        plt.plot(Ts_2, vals_2, label=env_val_label_2)
+
+        plt.legend(loc=0)
+
+        plt.savefig(out_prefix + '_B_{}.png'.format(str(B)), bbox_inches='tight', dpi=500)
+        plt.clf()
 
 def _check_only_ok(Bratio, Tratio, only_B, only_T):
     if only_B != None and only_T != None:
@@ -212,6 +305,15 @@ def _main():
         [min_envs, args.out_prefix, "M02", "$|m_{0,2}|$", "abs", "%.2f"],
         [min_envs, args.out_prefix, "M12", "$|m_{1,2}|$", "abs", "%.2f"]]
 
+    for env in min_envs:
+        mode1_avg = (env["M01"] + env["M11"]) / 2.0
+        mode2_avg = (env["M02"] + env["M12"]) / 2.0
+        env["mode1_avg"] = abs(mode1_avg)
+        env["mode2_avg"] = abs(mode2_avg)
+
+    avg_plot_args = [[min_envs, args.out_prefix, "mode1_avg", "$|m_{1}|$", None, "%.2f"],
+        [min_envs, args.out_prefix, "mode2_avg", "$|m_{2}|$", None, "%.2f"]]
+
     M_phase_plot_args = [[min_envs, args.out_prefix + "_phase", "M01", "$|m_{0,1}| > 0$", "phase", "%.2f"],
         [min_envs, args.out_prefix + "_phase", "M11", "$|m_{1,1}| > 0$", "phase", "%.2f"],
         [min_envs, args.out_prefix + "_phase", "M02", "$|m_{0,2}| > 0$", "phase", "%.2f"],
@@ -224,6 +326,7 @@ def _main():
 
     plot_args = []
     plot_args.extend(M_plot_args)
+    plot_args.extend(avg_plot_args)
     plot_args.extend(M_phase_plot_args)
     plot_args.extend(W_plot_args)
     plot_args.append([min_envs, args.out_prefix, "FreeEnergy", "$F$", None, None])
@@ -231,8 +334,17 @@ def _main():
     if not args.ions:
         plot_args.append([min_envs, args.out_prefix, "Mu", "$\mu$", None, None])
 
-    with Pool() as pool:
-        pool.starmap(_make_BT_plot, plot_args)
+    #with Pool() as pool:
+    #    pool.starmap(_make_BT_plot, plot_args)
+    for this_plot_args in plot_args:
+        _make_BT_plot(*this_plot_args)
+
+    _multival_phase_plot(min_envs, args.out_prefix + "_phase_combine", "M01", "M02", "M01_and_M02", func="phase_incl_m2", cbar_format=None)
+    _multival_phase_plot(min_envs, args.out_prefix + "_phase_combine", "M11", "M12", "M11_and_M12", func="phase_incl_m2", cbar_format=None)
+
+    delta_B = 0.1
+    _near_M_b_cutoff_plot(min_envs, args.out_prefix + "_M_T_p0", "M01", "M02", "$m_{01}$", "$m_{02}$", delta_B)
+    _near_M_b_cutoff_plot(min_envs, args.out_prefix + "_M_T_p1", "M11", "M12", "$m_{11}$", "$m_{12}$", delta_B)
 
 if __name__ == "__main__":
     _main()
