@@ -131,7 +131,7 @@ def _collect_BT_env_val(min_envs, val_name, func=None):
 
     return xs, ys, vals
 
-def _make_val_diagram(Bs, Ts, vals, val_label, out_prefix, cbar_format=None):
+def _make_val_diagram(Bs, Ts, vals, val_label, out_prefix, cbar_format=None, clim_vals=None):
     plt.xlabel("$b_{xx}/4J_{b}$", fontsize='x-large')
     plt.ylabel("$T/4J_{b}$", fontsize='x-large')
     plt.title(val_label, fontsize='x-large')
@@ -145,10 +145,19 @@ def _make_val_diagram(Bs, Ts, vals, val_label, out_prefix, cbar_format=None):
     #plt.scatter(Bs, Ts, c=vals, cmap='Paired', s=15, edgecolors="none") # 100x100
     plt.scatter(Bs, Ts, c=vals, cmap='viridis', s=15, edgecolors="none") # 100x100
 
+    if clim_vals != None:
+        cbar_ticks = np.linspace(clim_vals[0], clim_vals[1], 11, endpoint=True)
+
     if cbar_format != None:
-        plt.colorbar(format=cbar_format)
+        if clim_vals != None:
+            plt.colorbar(ticks=cbar_ticks, format=cbar_format)
+        else:
+            plt.colorbar(format=cbar_format)
     else:
-        plt.colorbar()
+        if clim_vals != None:
+            plt.colorbar(ticks=cbar_ticks)
+        else:
+            plt.colorbar()
 
     if out_prefix == None:
         plt.show()
@@ -157,11 +166,11 @@ def _make_val_diagram(Bs, Ts, vals, val_label, out_prefix, cbar_format=None):
 
     plt.clf()
 
-def _make_BT_plot(min_envs, out_prefix, env_val, env_val_label, func=None, cbar_format=None):
+def _make_BT_plot(min_envs, out_prefix, env_val, env_val_label, func=None, cbar_format=None, clim_vals=None):
     Bs, Ts, Ms = _collect_BT_env_val(min_envs, env_val, func)
-    _make_val_diagram(Bs, Ts, Ms, env_val_label, "{}_{}".format(out_prefix, env_val), cbar_format)
+    _make_val_diagram(Bs, Ts, Ms, env_val_label, "{}_{}".format(out_prefix, env_val), cbar_format, clim_vals)
 
-def _multival_phase_plot(min_envs, out_prefix, env_val_1, env_val_2, val_label, func=None, cbar_format=None):
+def _multival_phase_plot(min_envs, out_prefix, env_val_1, env_val_2, val_label, func=None, cbar_format=None, clim_vals=None):
     Bs, Ts, val1s = _collect_BT_env_val(min_envs, env_val_1, func=None)
     Bs, Ts, val2s = _collect_BT_env_val(min_envs, env_val_2, func=None)
     combined_vals = []
@@ -180,7 +189,7 @@ def _multival_phase_plot(min_envs, out_prefix, env_val_1, env_val_2, val_label, 
         else:
             raise ValueError("func unsupported")
 
-    _make_val_diagram(Bs, Ts, combined_vals, val_label, "{}_{}".format(out_prefix, val_label), cbar_format)
+    _make_val_diagram(Bs, Ts, combined_vals, val_label, "{}_{}".format(out_prefix, val_label), cbar_format, clim_vals)
 
 def _near_M_b_cutoff_plot(min_envs, out_prefix, env_val_1, env_val_2, env_val_label_1, env_val_label_2, delta_B):
     # Find B cutoff.
@@ -245,12 +254,12 @@ def _near_M_b_cutoff_plot(min_envs, out_prefix, env_val_1, env_val_2, env_val_la
 
         plt.ylim(min(min(vals_1), min(vals_2)), max(max(vals_1), max(vals_2)))
 
-        plt.plot(Ts_1, vals_1, label=env_val_label_1)
-        plt.plot(Ts_2, vals_2, label=env_val_label_2)
+        plt.plot(Ts_1, vals_1, 'g-', label=env_val_label_1, linewidth=4)
+        plt.plot(Ts_2, vals_2, 'k--', label=env_val_label_2, linewidth=4)
 
         plt.legend(loc=0)
 
-        plt.savefig(out_prefix + '_B_{}.png'.format(str(B)), bbox_inches='tight', dpi=500)
+        plt.savefig(out_prefix + '_Bxy_{}.png'.format(str(B)), bbox_inches='tight', dpi=500)
         plt.clf()
 
 def _check_only_ok(Bratio, Tratio, only_B, only_T):
@@ -300,10 +309,10 @@ def _main():
     else:
         min_envs = _read_min_envs(args.read_prefix)
 
-    M_plot_args = [[min_envs, args.out_prefix, "M01", "$|m_{0,1}|$", "abs", "%.2f"],
-        [min_envs, args.out_prefix, "M11", "$|m_{1,1}|$", "abs", "%.2f"],
-        [min_envs, args.out_prefix, "M02", "$|m_{0,2}|$", "abs", "%.2f"],
-        [min_envs, args.out_prefix, "M12", "$|m_{1,2}|$", "abs", "%.2f"]]
+    M_plot_args = [[min_envs, args.out_prefix, "M01", "$|m_{0,1}|$", "abs", "%.2f", (0.0, 1.0)],
+        [min_envs, args.out_prefix, "M11", "$|m_{1,1}|$", "abs", "%.2f", (0.0, 1.0)],
+        [min_envs, args.out_prefix, "M02", "$|m_{0,2}|$", "abs", "%.2f", (0.0, 1.0)],
+        [min_envs, args.out_prefix, "M12", "$|m_{1,2}|$", "abs", "%.2f", (0.0, 1.0)]]
 
     for env in min_envs:
         mode1_avg = (env["M01"] + env["M11"]) / 2.0
@@ -311,18 +320,18 @@ def _main():
         env["mode1_avg"] = abs(mode1_avg)
         env["mode2_avg"] = abs(mode2_avg)
 
-    avg_plot_args = [[min_envs, args.out_prefix, "mode1_avg", "$|m_{1}|$", None, "%.2f"],
-        [min_envs, args.out_prefix, "mode2_avg", "$|m_{2}|$", None, "%.2f"]]
+    avg_plot_args = [[min_envs, args.out_prefix, "mode1_avg", "$|m_{1}|$", None, "%.2f", (0.0, 1.0)],
+        [min_envs, args.out_prefix, "mode2_avg", "$|m_{2}|$", None, "%.2f", (0.0, 1.0)]]
 
-    M_phase_plot_args = [[min_envs, args.out_prefix + "_phase", "M01", "$|m_{0,1}| > 0$", "phase", "%.2f"],
-        [min_envs, args.out_prefix + "_phase", "M11", "$|m_{1,1}| > 0$", "phase", "%.2f"],
-        [min_envs, args.out_prefix + "_phase", "M02", "$|m_{0,2}| > 0$", "phase", "%.2f"],
-        [min_envs, args.out_prefix + "_phase", "M12", "$|m_{1,2}| > 0$", "phase", "%.2f"]]
+    M_phase_plot_args = [[min_envs, args.out_prefix + "_phase", "M01", "$|m_{0,1}| > 0$", "phase", "%.2f", (0.0, 1.0)],
+        [min_envs, args.out_prefix + "_phase", "M11", "$|m_{1,1}| > 0$", "phase", "%.2f", (0.0, 1.0)],
+        [min_envs, args.out_prefix + "_phase", "M02", "$|m_{0,2}| > 0$", "phase", "%.2f", (0.0, 1.0)],
+        [min_envs, args.out_prefix + "_phase", "M12", "$|m_{1,2}| > 0$", "phase", "%.2f", (0.0, 1.0)]]
 
-    W_plot_args = [[min_envs, args.out_prefix, "W01", "$w_{0,1}$", None, "%.2f"],
-        [min_envs, args.out_prefix, "W11", "$w_{1,1}$", None, "%.2f"],
-        [min_envs, args.out_prefix, "W02", "$w_{0,2}$", None, "%.2f"],
-        [min_envs, args.out_prefix, "W12", "$w_{1,2}$", None, "%.2f"]]
+    W_plot_args = [[min_envs, args.out_prefix, "W01", "$w_{0,1}$", None, "%.2f", (0.0, 1.0)],
+        [min_envs, args.out_prefix, "W11", "$w_{1,1}$", None, "%.2f", (0.0, 1.0)],
+        [min_envs, args.out_prefix, "W02", "$w_{0,2}$", None, "%.2f", (0.0, 1.0)],
+        [min_envs, args.out_prefix, "W12", "$w_{1,2}$", None, "%.2f", (0.0, 1.0)]]
 
     plot_args = []
     plot_args.extend(M_plot_args)
@@ -339,8 +348,8 @@ def _main():
     for this_plot_args in plot_args:
         _make_BT_plot(*this_plot_args)
 
-    _multival_phase_plot(min_envs, args.out_prefix + "_phase_combine", "M01", "M02", "M01_and_M02", func="phase_incl_m2", cbar_format=None)
-    _multival_phase_plot(min_envs, args.out_prefix + "_phase_combine", "M11", "M12", "M11_and_M12", func="phase_incl_m2", cbar_format=None)
+    _multival_phase_plot(min_envs, args.out_prefix + "_phase_combine", "M01", "M02", "M01_and_M02", func="phase_incl_m2", cbar_format="%.2f", clim_vals=(0.0, 1.0))
+    _multival_phase_plot(min_envs, args.out_prefix + "_phase_combine", "M11", "M12", "M11_and_M12", func="phase_incl_m2", cbar_format="%.2f", clim_vals=(0.0, 1.0))
 
     delta_B = 0.1
     _near_M_b_cutoff_plot(min_envs, args.out_prefix + "_M_T_p0", "M01", "M02", "$m_{01}$", "$m_{02}$", delta_B)
