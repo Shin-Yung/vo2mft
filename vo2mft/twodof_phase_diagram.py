@@ -20,8 +20,8 @@ def phase_sample(base_env, num_Bs, num_Ts, bounds=None):
 
     #Bratio_start, Bratio_stop = 0.01, 0.7
     #Tratio_start, Tratio_stop = 0.01, 0.8
-    Bratio_start, Bratio_stop = 0.01, 1.0
-    Tratio_start, Tratio_stop = 0.01, 1.0
+    Bratio_start, Bratio_stop = 0.01, 0.6
+    Tratio_start, Tratio_stop = 0.01, 0.8
     if bounds != None:
         Bratio_start = bounds[0][0]
         Bratio_stop = bounds[0][1]
@@ -275,10 +275,10 @@ def _near_M_b_cutoff_plot(min_envs, out_prefix, env_val_1, env_val_2, env_val_la
         plt.plot(Ts_1, vals_1, 'r-', label=env_val_label_1, linewidth=4)
         plt.plot(Ts_2, vals_2, 'k--', label=env_val_label_2, linewidth=4)
 
-        plt.legend(loc=0, fontsize='x-large')
+        plt.legend(loc=0, fontsize='x-large', title="$b_x/4J_b =$ {:.4f}".format(B))
 
-        plt.savefig(out_prefix + '_Bxy_{}.png'.format(str(B)), bbox_inches='tight', dpi=500)
-        plt.savefig(out_prefix + '_Bxy_{}.eps'.format(str(B)), bbox_inches='tight', dpi=500)
+        plt.savefig(out_prefix + '_Bxy_{:.4f}.png'.format(B), bbox_inches='tight', dpi=500)
+        plt.savefig(out_prefix + '_Bxy_{:.4f}.eps'.format(B), bbox_inches='tight', dpi=500)
         plt.clf()
 
         if aspect != None:
@@ -385,6 +385,22 @@ def _march16_plots():
 
     # Jxz = 0, m vs T at fixed b
     out_prefix = "march16_quad_fixed_b"
+    aspect = [0.4, 1.0]
+    bounds = [[0.01, 0.6], [0.01, 0.5]]
+
+    min_envs = _get_min_envs(base_env_path, read_prefix, out_prefix, ions, num_Bs, num_Ts, npar, bounds)
+    _make_plots(min_envs, out_prefix, ions, plot_spectrum, plot_dos, only_B, only_T, aspect)
+
+    # Jxz = 0, Jc = 0.2, m vs b, T
+    base_env_path = "march16_quad_Jc_plot.json"
+    out_prefix = "march16_quad_Jc_bT"
+    bounds = [[0.01, 0.6], [0.01, 0.8]]
+
+    min_envs = _get_min_envs(base_env_path, read_prefix, out_prefix, ions, num_Bs, num_Ts, npar, bounds)
+    _make_plots(min_envs, out_prefix, ions, plot_spectrum, plot_dos, only_B, only_T, aspect=None)
+
+    # Jxz = 0, Jc = 0.2, m vs T at fixed b
+    out_prefix = "march16_quad_Jc_fixed_b"
     aspect = [0.4, 1.0]
     bounds = [[0.01, 0.6], [0.01, 0.5]]
 

@@ -1,8 +1,12 @@
 *.swp
 *.pyc
 *.png
+*.eps
 *.o
 *.out
+*_all_data
+*_min_data
+*_dos_data
 vo2solve/vo2solve_front/vo2solve_front
 twodof/vo2solve_front/vo2solve_front
 vo2mft.egg-info
