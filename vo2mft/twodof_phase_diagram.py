@@ -363,7 +363,7 @@ def _make_plots(min_envs, out_prefix, ions, plot_spectrum, plot_dos, only_B, onl
     _near_M_b_cutoff_plot(min_envs, out_prefix + "_M_T_p1", "M11", "M12", "$m_{1,1}$", "$m_{1,2}$", delta_B, aspect)
 
     _set_M_avgs(min_envs)
-    _near_M_b_cutoff_plot(min_envs, out_prefix + "_M_T_avg", "M1_avg", "M2_avg", "$\\frac{1}{2}(m_{01}+m_{11})$", "$\\frac{1}{2}(m_{02}+m_{12})$", delta_B, aspect)
+    _near_M_b_cutoff_plot(min_envs, out_prefix + "_M_T_avg", "M1_avg", "M2_avg", "$\\frac{1}{2}(m_{0,1}+m_{1,1})$", "$\\frac{1}{2}(m_{0,2}+m_{1,2})$", delta_B, aspect)
 
 def _march16_plots():
     base_env_path = "march16_quad_plot.json"
