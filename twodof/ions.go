@@ -47,10 +47,15 @@ func (env *Environment) H_Ion(S []int, Ds *HoppingEV) float64 {
 	Kcxxe, Kczze, Kcxz := 2.0*env.Kcxx(), 2.0*env.Kczz(), env.Kcxz()
 	Dco := Ds.Dco(env)
 
-	S01_part := (Bzz+Kbe*env.W11+Kczze*env.W01+Kcxz*env.W02)*S01*S01 - (4.0*Jb*env.M11+2.0*Jc*env.M01+2.0*Dco)*S01
-	S11_part := (Bxy+Kbe*env.W01+Kcxxe*env.W11+Kcxz*env.W12)*S11*S11 - 4.0*Jb*env.M01*S11
-	S02_part := (Bxy+Kbe*env.W12+Kcxxe*env.W02+Kcxz*env.W01)*S02*S02 - 4.0*Jb*env.M12*S02
-	S12_part := (Bzz+Kbe*env.W02+Kczze*env.W12+Kcxz*env.W11)*S12*S12 - (4.0*Jb*env.M02+2.0*Jc*env.M12+2.0*Dco)*S12
+	Fac_xy, Poisson := env.Fac_xy, env.Poisson
+	Bxy_11_F := (1 + Poisson*Fac_xy) * Bxy
+	Bxy_02_F := (1 - Fac_xy) * Bxy
+	Bzz_F := (1 + Poisson*Fac_xy) * Bzz
+
+	S01_part := (Bzz_F+Kbe*env.W11+Kczze*env.W01+Kcxz*env.W02)*S01*S01 - (4.0*Jb*env.M11+2.0*Jc*env.M01+2.0*Dco)*S01
+	S11_part := (Bxy_11_F+Kbe*env.W01+Kcxxe*env.W11+Kcxz*env.W12)*S11*S11 - 4.0*Jb*env.M01*S11
+	S02_part := (Bxy_02_F+Kbe*env.W12+Kcxxe*env.W02+Kcxz*env.W01)*S02*S02 - 4.0*Jb*env.M12*S02
+	S12_part := (Bzz_F+Kbe*env.W02+Kczze*env.W12+Kcxz*env.W11)*S12*S12 - (4.0*Jb*env.M02+2.0*Jc*env.M12+2.0*Dco)*S12
 	S02_S01_part := Bxz * S02 * S02 * S01 * S01
 	S11_S12_part := Bxz * S11 * S11 * S12 * S12
 	return S01_part + S11_part + S02_part + S12_part + S02_S01_part + S11_S12_part

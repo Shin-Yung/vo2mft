@@ -19,12 +19,14 @@ import (
 type Environment struct {
 	// Size of k mesh.
 	BZPointsPerDim int
+
 	// Order parameter <S_{p,alpha}>.
 	M01, M11, M02, M12 float64
 	// Order parameter <S^2_{p,alpha}>.
 	W01, W11, W02, W12 float64
 	// Inverse temperature, 1 / (k_B * T).
 	Beta float64
+
 	// One-spin term for BEG model: coefficient for (S_i)^2.
 	Bxy0, Bzz0, Bxz0 float64
 	// Exchange parameters for BEG model: coefficients to S_i dot S_j.
@@ -34,6 +36,14 @@ type Environment struct {
 	Kb0 float64
 	// Quartic contributions along dimers.
 	Kcxx0, Kczz0, Kcxz0 float64
+	// Poisson's ratio (approx 0.3 for VO2)
+	Poisson float64
+	// Scaling factor for [110] strain:
+	// Bxy_02 *= (1 - Fac_xy)
+	// Bxy_11 *= (1 + Poisson*Fac_xy)
+	// Bzz *= (1 + Poisson*Fac_xy)
+	Fac_xy float64
+
 	// Hopping along c axis. TODO - strain dependence.
 	Tce, Tco float64
 	// Hopping along body diagonal.
