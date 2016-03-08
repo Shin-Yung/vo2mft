@@ -1,7 +1,7 @@
 from copy import deepcopy
 from vo2mft.solve import solve_set
 
-def minimize_free_energy(env, eps=1e-6, ions=False, twodof=False, twodof_body_indep=False):
+def minimize_free_energy(env, eps=1e-6, ions=False, twodof=False, twodof_body_indep=False, initial_vals=None):
     '''Vary the initial conditions of env to find the solution which
     minimizes the free energy. Return the minimum free energy env and
     a list of all the solved envs.
@@ -15,12 +15,19 @@ def minimize_free_energy(env, eps=1e-6, ions=False, twodof=False, twodof_body_in
         initial_conds = [{"M01": 1.0, "M11": 1.0, "M02": 1.0, "M12": 1.0, "W01": 1.0, "W11": 1.0, "W02": 1.0, "W12": 1.0},
                 {"M01": 0.01, "M11": 0.01, "M02": 0.01, "M12": 0.01, "W01": 0.7, "W11": 0.7, "W02": 0.7, "W12": 0.7},
                 {"M01": 1.0, "M11": 1.0, "M02": 0.01, "M12": 0.01, "W01": 1.0, "W11": 1.0, "W02": 0.7, "W12": 0.7},
-                {"M01": 0.01, "M11": 0.01, "M02": 1.0, "M12": 1.0, "W01": 0.7, "W11": 0.7, "W02": 1.0, "W12": 1.0},
                 {"M01": 1.0, "M11": 1.0, "M02": 1.0, "M12": 0.01, "W01": 1.0, "W11": 1.0, "W02": 1.0, "W12": 0.7},
                 {"M01": 1.0, "M11": 1.0, "M02": 0.01, "M12": 1.0, "W01": 1.0, "W11": 1.0, "W02": 0.7, "W12": 1.0}]
         #flags = [[], ["--m01_0", "--m11_0", "--m02_0", "--m12_0"],
         #        ["--m02_0", "--m12_0"], ["--m12_0"], ["--m02_0"]]
         flags = [[], [], [], [], [], []]
+        if initial_vals == "mode_symmetric":
+            # Consider M2 with both mode 1 -> 0 and mode 2 -> 0.
+            # Appropriate when the Hamiltonian breaks the symmetry between these.
+            # If the Hamiltonian is symmetric, want to break the symmetry
+            # in initial conditions to avoid solution fluctuating between these.
+            initial_conds.append({"M01": 0.01, "M11": 0.01, "M02": 1.0, "M12": 1.0, "W01": 0.7, "W11": 0.7, "W02": 1.0, "W12": 1.0})
+            flags.append([])
+
     else:
         initial_conds = [{"M01": 1.0, "M02": 1.0}, {"M01": 1.0, "M02": 1.0},
                 {"M01": 1.0, "M02": 1.0}]

@@ -49,12 +49,12 @@ def phase_sample(base_env, num_Bs, num_Ts, bounds=None):
 
     return sample_envs
 
-def min_envs_from_sample(sample_envs, ions, npar):
+def min_envs_from_sample(sample_envs, ions, npar, initial_vals=None):
     eps = 1e-8
     sample_env_eps = []
     for env in sample_envs:
         twodof, twodof_body_indep = True, True
-        sample_env_eps.append((env, eps, ions, twodof, twodof_body_indep))
+        sample_env_eps.append((env, eps, ions, twodof, twodof_body_indep, initial_vals))
 
     # Find minimal free energy solutions of sample_envs in parallel.
     # Pool() uses number of workers = os.cpu_count() by default.
@@ -73,10 +73,10 @@ def min_envs_from_sample(sample_envs, ions, npar):
 
     return all_min_envs, all_final_envs
 
-def min_envs_from_base(base_path, ions, num_Bs, num_Ts, npar, bounds=None):
+def min_envs_from_base(base_path, ions, num_Bs, num_Ts, npar, bounds=None, initial_vals=None):
     base_env = read_env_file(base_path)
     sample = phase_sample(base_env, num_Bs, num_Ts, bounds)
-    min_envs, all_fenvs = min_envs_from_sample(sample, ions, npar)
+    min_envs, all_fenvs = min_envs_from_sample(sample, ions, npar, initial_vals)
     return min_envs, all_fenvs
 
 def _min_env_filename(prefix):
@@ -183,22 +183,41 @@ def _make_BT_plot(min_envs, out_prefix, env_val, env_val_label, func=None, cbar_
     Bs, Ts, Ms = _collect_BT_env_val(min_envs, env_val, func)
     _make_val_diagram(Bs, Ts, Ms, env_val_label, "{}_{}".format(out_prefix, env_val), cbar_format, clim_vals)
 
-def _multival_phase_plot(min_envs, out_prefix, env_val_1, env_val_2, val_label, func=None, cbar_format=None, clim_vals=None, cbar_tick_labels=None):
+def _multival_phase_plot(min_envs, out_prefix, env_val_1, env_val_2, val_label, func=None, cbar_format=None, clim_vals=None, cbar_tick_labels=None, env_val_1p=None, env_val_2p=None):
     Bs, Ts, val1s = _collect_BT_env_val(min_envs, env_val_1, func=None)
     Bs, Ts, val2s = _collect_BT_env_val(min_envs, env_val_2, func=None)
+    # If env_val_1p and env_val_2p are specified, average env_val_1 with env_val_1p and
+    # env_val_2 with env_val_2p.
+    if env_val_1p != None:
+        Bs, Ts, val1ps = _collect_BT_env_val(min_envs, env_val_1p, func=None)
+    if env_val_2p != None:
+        Bs, Ts, val2ps = _collect_BT_env_val(min_envs, env_val_2p, func=None)
     combined_vals = []
 
-    for val1, val2 in zip(val1s, val2s):
+    val_set = list(zip(val1s, val2s))
+    if env_val_1p != None and env_val_2p != None:
+        valp_set = list(zip(val1ps, val2ps))
+
+    for i in range(len(val1s)):
+        val1, val2 = val_set[i]
+        use1, use2 = val1, val2
+        if env_val_1p != None and env_val_2p != None:
+            val1p, val2p = valp_set[i]
+            use1, use2 = 0.5 * (val1 + val1p), 0.5 * (val2 + val2p)
+
         if func == "phase_incl_m2":
             def phase_func(m1, m2):
                 eps = 1e-6
-                if abs(m1) > eps and abs(m2) > eps:
+                if abs(m1) > eps and abs(m2) > eps and abs(abs(m1) - abs(m2)) < eps:
                     return 1.0
+                elif abs(m1) > eps and abs(m2) > eps:
+                    #return 1.0 - 0.5 * abs(abs(m1) - abs(m2))
+                    return 0.75
                 elif (abs(m1) > eps and abs(m2) < eps) or (abs(m1) < eps and abs(m2) > eps):
                     return 0.5
                 else:
                     return 0.0
-            combined_vals.append(phase_func(val1, val2))
+            combined_vals.append(phase_func(use1, use2))
         else:
             raise ValueError("func unsupported")
 
@@ -239,8 +258,8 @@ def _near_M_b_cutoff_plot(min_envs, out_prefix, env_val_1, env_val_2, env_val_la
         if Bratio not in B_val2_data:
             B_val2_data[Bratio] = []
 
-        val_1 = this_env[env_val_1]
-        val_2 = this_env[env_val_2]
+        val_1 = abs(this_env[env_val_1])
+        val_2 = abs(this_env[env_val_2])
 
         B_val1_data[Bratio].append([Tratio, val_1])
         B_val2_data[Bratio].append([Tratio, val_2])
@@ -295,13 +314,13 @@ def _check_only_ok(Bratio, Tratio, only_B, only_T):
 
 def _set_M_avgs(min_envs):
     for env in min_envs:
-        env["M1_avg"] = 0.5 * (env["M01"] + env["M11"])
-        env["M2_avg"] = 0.5 * (env["M02"] + env["M12"])
+        env["M1_avg"] = 0.5 * (abs(env["M01"]) + abs(env["M11"]))
+        env["M2_avg"] = 0.5 * (abs(env["M02"]) + abs(env["M12"]))
 
-def _get_min_envs(base_env_path, read_prefix, out_prefix, ions, num_Bs, num_Ts, npar, bounds=None):
+def _get_min_envs(base_env_path, read_prefix, out_prefix, ions, num_Bs, num_Ts, npar, bounds=None, initial_vals=None):
     min_envs = None
     if read_prefix == None:
-        min_envs, all_fenvs = min_envs_from_base(base_env_path, ions, num_Bs, num_Ts, npar, bounds)
+        min_envs, all_fenvs = min_envs_from_base(base_env_path, ions, num_Bs, num_Ts, npar, bounds, initial_vals)
         _save_min_envs(min_envs, out_prefix)
         _save_all_envs(all_fenvs, out_prefix)
     else:
@@ -353,17 +372,18 @@ def _make_plots(min_envs, out_prefix, ions, plot_spectrum, plot_dos, only_B, onl
         _make_BT_plot(*this_plot_args)
 
     # phase diagram in b, T: M1 or M2 or R
-    phase_tick_labels = [[0.0, 0.5, 1.0], ["R", "M2", "M1"]]
+    phase_tick_labels = [[0.0, 0.5, 0.75, 1.0], ["R", "M2", "T-like", "M1"]]
     _multival_phase_plot(min_envs, out_prefix + "_phase_combine_M01_M02", "M01", "M02", "", func="phase_incl_m2", cbar_format="%.2f", clim_vals=(0.0, 1.0), cbar_tick_labels=phase_tick_labels)
     _multival_phase_plot(min_envs, out_prefix + "_phase_combine_M11_M12", "M11", "M12", "", func="phase_incl_m2", cbar_format="%.2f", clim_vals=(0.0, 1.0), cbar_tick_labels=phase_tick_labels)
+    _multival_phase_plot(min_envs, out_prefix + "_phase_combine_avg", "M01", "M02", "", func="phase_incl_m2", cbar_format="%.2f", clim_vals=(0.0, 1.0), cbar_tick_labels=phase_tick_labels, env_val_1p="M11", env_val_2p="M12")
 
     # m vs T for fixed b
     delta_B = 0.1
-    _near_M_b_cutoff_plot(min_envs, out_prefix + "_M_T_p0", "M01", "M02", "$m_{0,1}$", "$m_{0,2}$", delta_B, aspect)
-    _near_M_b_cutoff_plot(min_envs, out_prefix + "_M_T_p1", "M11", "M12", "$m_{1,1}$", "$m_{1,2}$", delta_B, aspect)
+    _near_M_b_cutoff_plot(min_envs, out_prefix + "_M_T_p0", "M01", "M02", "$|m_{0,1}|$", "$|m_{0,2}|$", delta_B, aspect)
+    _near_M_b_cutoff_plot(min_envs, out_prefix + "_M_T_p1", "M11", "M12", "$|m_{1,1}|$", "$|m_{1,2}|$", delta_B, aspect)
 
     _set_M_avgs(min_envs)
-    _near_M_b_cutoff_plot(min_envs, out_prefix + "_M_T_avg", "M1_avg", "M2_avg", "$\\frac{1}{2}(m_{0,1}+m_{1,1})$", "$\\frac{1}{2}(m_{0,2}+m_{1,2})$", delta_B, aspect)
+    _near_M_b_cutoff_plot(min_envs, out_prefix + "_M_T_avg", "M1_avg", "M2_avg", "$\\frac{1}{2}(|m_{0,1}|+|m_{1,1}|)$", "$\\frac{1}{2}(|m_{0,2}|+|m_{1,2}|)$", delta_B, aspect)
 
 def _march16_plots():
     base_env_path = "march16_quad_plot.json"
@@ -379,11 +399,11 @@ def _march16_plots():
     only_T = None
     bounds = [[0.01, 0.6], [0.01, 0.8]]
 
-    # Jxz = 0, m vs b, T
+    # Bxz = 0, m vs b, T
     min_envs = _get_min_envs(base_env_path, read_prefix, out_prefix, ions, num_Bs, num_Ts, npar, bounds)
     _make_plots(min_envs, out_prefix, ions, plot_spectrum, plot_dos, only_B, only_T, aspect=None)
 
-    # Jxz = 0, m vs T at fixed b
+    # Bxz = 0, m vs T at fixed b
     out_prefix = "march16_quad_fixed_b"
     aspect = [0.4, 1.0]
     bounds = [[0.01, 0.6], [0.01, 0.5]]
@@ -391,7 +411,43 @@ def _march16_plots():
     min_envs = _get_min_envs(base_env_path, read_prefix, out_prefix, ions, num_Bs, num_Ts, npar, bounds)
     _make_plots(min_envs, out_prefix, ions, plot_spectrum, plot_dos, only_B, only_T, aspect)
 
-    # Jxz = 0, Jc = 0.2, m vs b, T
+    # Bxz = 0, Jc = 0, Fac_xy = 0.03, Poisson = 0, m vs b, T
+    base_env_path = "march16_quad_Fxy_plot.json"
+    out_prefix = "march16_quad_Fxy"
+    bounds = [[0.01, 0.6], [0.01, 0.8]]
+    initial_vals = "mode_symmetric"
+
+    min_envs = _get_min_envs(base_env_path, read_prefix, out_prefix, ions, num_Bs, num_Ts, npar, bounds, initial_vals)
+    _make_plots(min_envs, out_prefix, ions, plot_spectrum, plot_dos, only_B, only_T, aspect=None)
+
+    # Bxz = 0, Jc = 0, Fac_xy = 0.03, Poisson = 0, m vs T at fixed b
+    base_env_path = "march16_quad_Fxy_plot.json"
+    out_prefix = "march16_quad_Fxy_fixed_b"
+    aspect = [0.5, 1.0]
+    bounds = [[0.01, 0.6], [0.01, 0.5]]
+    initial_vals = "mode_symmetric"
+
+    min_envs = _get_min_envs(base_env_path, read_prefix, out_prefix, ions, num_Bs, num_Ts, npar, bounds, initial_vals)
+    _make_plots(min_envs, out_prefix, ions, plot_spectrum, plot_dos, only_B, only_T, aspect)
+
+    # Bxz = 0, Jc = 0, Fac_xy = 0.03, Poisson = 0.3, m vs b, T
+    base_env_path = "march16_quad_Fxy_Poisson_plot.json"
+    out_prefix = "march16_quad_Fxy_Poisson"
+    bounds = [[0.01, 0.6], [0.01, 0.8]]
+    initial_vals = "mode_symmetric"
+
+    min_envs = _get_min_envs(base_env_path, read_prefix, out_prefix, ions, num_Bs, num_Ts, npar, bounds, initial_vals)
+    _make_plots(min_envs, out_prefix, ions, plot_spectrum, plot_dos, only_B, only_T, aspect=None)
+
+    # Bxz = 0.1, Jc = 0, Fac_xy = 0.03, Poisson = 0, m vs b, T
+    base_env_path = "march16_qq_Fxy_plot.json"
+    out_prefix = "march16_qq_Fxy"
+    bounds = [[0.01, 0.6], [0.01, 0.8]]
+
+    min_envs = _get_min_envs(base_env_path, read_prefix, out_prefix, ions, num_Bs, num_Ts, npar, bounds, initial_vals)
+    _make_plots(min_envs, out_prefix, ions, plot_spectrum, plot_dos, only_B, only_T, aspect=None)
+
+    # Bxz = 0, Jc = 0.2, m vs b, T
     base_env_path = "march16_quad_Jc_plot.json"
     out_prefix = "march16_quad_Jc_bT"
     bounds = [[0.01, 0.6], [0.01, 0.8]]
@@ -399,7 +455,7 @@ def _march16_plots():
     min_envs = _get_min_envs(base_env_path, read_prefix, out_prefix, ions, num_Bs, num_Ts, npar, bounds)
     _make_plots(min_envs, out_prefix, ions, plot_spectrum, plot_dos, only_B, only_T, aspect=None)
 
-    # Jxz = 0, Jc = 0.2, m vs T at fixed b
+    # Bxz = 0, Jc = 0.2, m vs T at fixed b
     out_prefix = "march16_quad_Jc_fixed_b"
     aspect = [0.4, 1.0]
     bounds = [[0.01, 0.6], [0.01, 0.5]]
@@ -407,7 +463,7 @@ def _march16_plots():
     min_envs = _get_min_envs(base_env_path, read_prefix, out_prefix, ions, num_Bs, num_Ts, npar, bounds)
     _make_plots(min_envs, out_prefix, ions, plot_spectrum, plot_dos, only_B, only_T, aspect)
 
-    # Jxz = 0.1, m vs b, T
+    # Bxz = 0.1, m vs b, T
     base_env_path = "march16_quart_plot.json"
     out_prefix = "march16_quart_bT"
     bounds = [[0.01, 0.6], [0.01, 0.8]]
@@ -415,7 +471,7 @@ def _march16_plots():
     min_envs = _get_min_envs(base_env_path, read_prefix, out_prefix, ions, num_Bs, num_Ts, npar, bounds)
     _make_plots(min_envs, out_prefix, ions, plot_spectrum, plot_dos, only_B, only_T, aspect=None)
 
-    # Jxz = 0.1, m vs T at fixed b
+    # Bxz = 0.1, m vs T at fixed b
     out_prefix = "march16_quart_fixed_b"
     bounds = [[0.01, 0.6], [0.01, 0.5]]
     aspect = [0.4, 1.0]
