@@ -175,7 +175,7 @@ def _make_val_diagram(Bs, Ts, vals, val_label, out_prefix, cbar_format=None, cli
         plt.show()
     else:
         plt.savefig(out_prefix + '.png', bbox_inches='tight', dpi=500)
-        plt.savefig(out_prefix + '.eps', bbox_inches='tight', dpi=500)
+        #plt.savefig(out_prefix + '.eps', bbox_inches='tight', dpi=500)
 
     plt.clf()
 
@@ -223,9 +223,10 @@ def _multival_phase_plot(min_envs, out_prefix, env_val_1, env_val_2, val_label, 
 
     _make_val_diagram(Bs, Ts, combined_vals, val_label, "{}_{}".format(out_prefix, val_label), cbar_format, clim_vals, cbar_tick_labels)
 
-def _near_M_b_cutoff_plot(min_envs, out_prefix, env_val_1, env_val_2, env_val_label_1, env_val_label_2, delta_B, aspect=None):
-    # Find B cutoff.
-    max_val_B = None
+def _find_max_Bx(min_envs, env_val_A, env_val_B):
+    # max_val_B will be set to the largest Bratio in which val_A or val_B is
+    # nonzero for either min_envs_1 or min_envs_2.
+    max_val_Bx = None
     for this_env in min_envs:
         if this_env == None:
             continue
@@ -233,15 +234,17 @@ def _near_M_b_cutoff_plot(min_envs, out_prefix, env_val_1, env_val_2, env_val_la
         Bratio = this_env["Bxy0"] / this_Jbe
 
         eps = 1e-6
-        val_1 = this_env[env_val_1]
-        val_2 = this_env[env_val_2]
+        val_A = this_env[env_val_A]
+        val_B = this_env[env_val_B]
 
-        if abs(val_1) > eps or abs(val_2) > eps:
-            if max_val_B == None or Bratio > max_val_B:
-                max_val_B = Bratio
+        if abs(val_A) > eps or abs(val_B) > eps:
+            if max_val_Bx == None or Bratio > max_val_Bx:
+                max_val_Bx = Bratio
 
-    # Collect (T, val_1) and (T, val_2) for desired Bs.
-    B_val1_data, B_val2_data = {}, {}
+    return max_val_Bx
+
+def _collect_constB_data(min_envs, max_val_Bx, env_val_A, env_val_B, delta_Bx):
+    B_valA_data, B_valB_data = {}, {}
     for this_env in min_envs:
         if this_env == None:
             continue
@@ -249,38 +252,71 @@ def _near_M_b_cutoff_plot(min_envs, out_prefix, env_val_1, env_val_2, env_val_la
         Bratio = this_env["Bxy0"] / this_Jbe
         Tratio = (1.0 / this_env["Beta"]) / this_Jbe
 
-        if Bratio > max_val_B or max_val_B - Bratio > delta_B:
+        if Bratio > max_val_Bx or max_val_Bx - Bratio > delta_Bx:
             continue
 
-        if Bratio not in B_val1_data:
-            B_val1_data[Bratio] = []
+        if Bratio not in B_valA_data:
+            B_valA_data[Bratio] = []
 
-        if Bratio not in B_val2_data:
-            B_val2_data[Bratio] = []
+        if Bratio not in B_valB_data:
+            B_valB_data[Bratio] = []
 
-        val_1 = abs(this_env[env_val_1])
-        val_2 = abs(this_env[env_val_2])
+        val_A = abs(this_env[env_val_A])
+        val_B = abs(this_env[env_val_B])
 
-        B_val1_data[Bratio].append([Tratio, val_1])
-        B_val2_data[Bratio].append([Tratio, val_2])
+        B_valA_data[Bratio].append([Tratio, val_A])
+        B_valB_data[Bratio].append([Tratio, val_B])
+
+    return B_valA_data, B_valB_data
+
+def _sort_Bdata(B, B_valA_data, B_valB_data):
+    Ts_A, vals_A, Ts_B, vals_B = [], [], [], []
+
+    this_valA_data = B_valA_data[B]
+    this_valB_data = B_valB_data[B]
+
+    sorted_valA = sorted(this_valA_data, key=lambda x: x[0])
+    sorted_valB = sorted(this_valB_data, key=lambda x: x[0])
+
+    for T, val in sorted_valA:
+        Ts_A.append(T)
+        vals_A.append(val)
+
+    for T, val in sorted_valB:
+        Ts_B.append(T)
+        vals_B.append(val)
+
+    return Ts_A, vals_A, Ts_B, vals_B
+
+def _all_min(xs_list):
+    min_val = None
+    for xs in xs_list:
+        this_min = min(xs)
+        if min_val == None or this_min < min_val:
+            min_val = this_min
+
+    return min_val
+
+def _all_max(xs_list):
+    max_val = None
+    for xs in xs_list:
+        this_max = max(xs)
+        if max_val == None or this_max > max_val:
+            max_val = this_max
+
+    return max_val
+
+def _near_M_b_cutoff_plot(min_envs, out_prefix, env_val_1, env_val_2, env_val_label_1, env_val_label_2, delta_B, aspect=None):
+    # Find B cutoff.
+    max_val_B = _find_max_Bx(min_envs, env_val_1, env_val_2)
+
+    # Collect (T, val_1) and (T, val_2) for desired Bs.
+    B_val1_data, B_val2_data = _collect_constB_data(min_envs, max_val_B,
+            env_val_1, env_val_2, delta_B)
 
     # Sort data and make plots.
     for B in B_val1_data.keys():
-        Ts_1, vals_1, Ts_2, vals_2 = [], [], [], []
-
-        val1_data = B_val1_data[B]
-        val2_data = B_val2_data[B]
-
-        sorted_val1 = sorted(val1_data, key=lambda x: x[0])
-        sorted_val2 = sorted(val2_data, key=lambda x: x[0])
-
-        for T, val in val1_data:
-            Ts_1.append(T)
-            vals_1.append(val)
-
-        for T, val in val2_data:
-            Ts_2.append(T)
-            vals_2.append(val)
+        Ts_1, vals_1, Ts_2, vals_2 = _sort_Bdata(B, B_val1_data, B_val2_data)
 
         if aspect != None:
             w, h = 10.0 * aspect[0], 10.0 * aspect[1]
@@ -288,8 +324,11 @@ def _near_M_b_cutoff_plot(min_envs, out_prefix, env_val_1, env_val_2, env_val_la
 
         plt.xlabel("$T/4J_{b}$", fontsize='x-large')
 
-        plt.xlim(min(min(Ts_1), min(Ts_2)), max(max(Ts_1), max(Ts_2)))
-        plt.ylim(min(min(vals_1), min(vals_2)), max(max(vals_1), max(vals_2)))
+        min_x, max_x = _all_min([Ts_1, Ts_2]), _all_max([Ts_1, Ts_2])
+        min_y, max_y = _all_min([vals_1, vals_2]), _all_max([vals_1, vals_2])
+
+        plt.xlim(min_x, max_x)
+        plt.ylim(min_y, max_y)
 
         plt.plot(Ts_1, vals_1, 'r-', label=env_val_label_1, linewidth=4)
         plt.plot(Ts_2, vals_2, 'k--', label=env_val_label_2, linewidth=4)
@@ -297,7 +336,56 @@ def _near_M_b_cutoff_plot(min_envs, out_prefix, env_val_1, env_val_2, env_val_la
         plt.legend(loc=0, fontsize='x-large', title="$b_x/4J_b =$ {:.4f}".format(B))
 
         plt.savefig(out_prefix + '_Bxy_{:.4f}.png'.format(B), bbox_inches='tight', dpi=500)
-        plt.savefig(out_prefix + '_Bxy_{:.4f}.eps'.format(B), bbox_inches='tight', dpi=500)
+        #plt.savefig(out_prefix + '_Bxy_{:.4f}.eps'.format(B), bbox_inches='tight', dpi=500)
+        plt.clf()
+
+        if aspect != None:
+            plt.close('all')
+
+def _near_M_b_cutoff_plot_multiple(min_envs_1, min_envs_2, out_prefix, env_val_A, env_val_B, env_val_labels_A, env_val_labels_B, delta_Bx, aspect=None):
+    # Find b cutoff.
+    max_val_Bx = max(_find_max_Bx(min_envs_1, env_val_A, env_val_B),
+            _find_max_Bx(min_envs_2, env_val_A, env_val_B))
+
+    # Collect (T, val_A) and (T, val_B) for desired bs.
+    B_valA_1_data, B_valB_1_data = _collect_constB_data(min_envs_1, max_val_Bx,
+            env_val_A, env_val_B, delta_Bx)
+    B_valA_2_data, B_valB_2_data = _collect_constB_data(min_envs_2, max_val_Bx,
+        env_val_A, env_val_B, delta_Bx)
+
+    # Make plots vs T at fixed b.
+    # Assume each data set has the same set of B's
+    # (that is, for each set at least 1 T exists at each b).
+    for B in B_valA_1_data.keys():
+        Ts_A_1, vals_A_1, Ts_B_1, vals_B_1 = _sort_Bdata(B, B_valA_1_data, B_valB_1_data)
+        Ts_A_2, vals_A_2, Ts_B_2, vals_B_2 = _sort_Bdata(B, B_valA_2_data, B_valB_2_data)
+
+        if aspect != None:
+            w, h = 10.0 * aspect[0], 10.0 * aspect[1]
+            plt.figure(figsize=(w, h))
+
+        plt.xlabel("$T/4J_{b}$", fontsize='x-large')
+
+        min_x = _all_min([Ts_A_1, Ts_B_1, Ts_A_2, Ts_B_2])
+        max_x = _all_max([Ts_A_1, Ts_B_1, Ts_A_2, Ts_B_2])
+        min_y = _all_min([vals_A_1, vals_B_1, vals_A_2, vals_B_2])
+        max_y = _all_max([vals_A_1, vals_B_1, vals_A_2, vals_B_2])
+
+        plt.xlim(min_x, max_x)
+        plt.ylim(min_y, max_y)
+
+        label_A1, label_A2 = env_val_labels_A
+        label_B1, label_B2 = env_val_labels_B
+
+        plt.plot(Ts_A_1, vals_A_1, 'k-', label=label_A1)                            # solid black, m_A(1)
+        plt.plot(Ts_B_1, vals_B_1, color='gray', linestyle='-', label=label_B1)     # solid gray, m_B(1)
+        plt.plot(Ts_A_2, vals_A_2, 'k--', label=label_A2)                           # dashed black, m_A(2)
+        plt.plot(Ts_B_2, vals_B_2, color='gray', linestyle='--', label=label_B2)    # dashed gray, m_B(2)
+
+        plt.legend(loc=0, fontsize='x-large', title="$b_x/4J_b =$ {:.4f}".format(B))
+
+        plt.savefig(out_prefix + '_Bxy_{:.4f}.png'.format(B), bbox_inches='tight', dpi=500)
+        #plt.savefig(out_prefix + '_Bxy_{:.4f}.eps'.format(B), bbox_inches='tight', dpi=500)
         plt.clf()
 
         if aspect != None:
@@ -328,6 +416,13 @@ def _get_min_envs(base_env_path, read_prefix, out_prefix, ions, num_Bs, num_Ts, 
 
     return min_envs
 
+def _add_averages(min_envs):
+    for env in min_envs:
+        mode1_avg = (env["M01"] + env["M11"]) / 2.0
+        mode2_avg = (env["M02"] + env["M12"]) / 2.0
+        env["mode1_avg"] = abs(mode1_avg)
+        env["mode2_avg"] = abs(mode2_avg)
+
 def _make_plots(min_envs, out_prefix, ions, plot_spectrum, plot_dos, only_B, only_T, aspect=None):
     # m_{p \alpha} vs b, T plots
     M_plot_args = [[min_envs, out_prefix, "M01", "$|m_{0,1}|$", "abs", "%.2f", (0.0, 1.0)],
@@ -336,11 +431,7 @@ def _make_plots(min_envs, out_prefix, ions, plot_spectrum, plot_dos, only_B, onl
         [min_envs, out_prefix, "M12", "$|m_{1,2}|$", "abs", "%.2f", (0.0, 1.0)]]
 
     # m_{0 \alpha}, m_{1 \alpha} average vs b, T plots
-    for env in min_envs:
-        mode1_avg = (env["M01"] + env["M11"]) / 2.0
-        mode2_avg = (env["M02"] + env["M12"]) / 2.0
-        env["mode1_avg"] = abs(mode1_avg)
-        env["mode2_avg"] = abs(mode2_avg)
+    _add_averages(min_envs)
 
     avg_plot_args = [[min_envs, out_prefix, "mode1_avg", "$|m_{1}|$", None, "%.2f", (0.0, 1.0)],
         [min_envs, out_prefix, "mode2_avg", "$|m_{2}|$", None, "%.2f", (0.0, 1.0)]]
@@ -503,6 +594,7 @@ def _main():
     parser.add_argument('--only_T', type=float, default=None,
             help="If specified with only_B and plot_spectrum or plot_dos, make the spectrum or dos plots only for the given (B, T) point")
     parser.add_argument('--march16', action='store_true', help="Make March16 plots")
+    parser.add_argument('--multi_b_cutoff', action='store_true', help="Make b cutoff plots for multiple runs")
     args = parser.parse_args()
 
     # TODO -- add only_B, only_T options to fix (B, T) point for generating
@@ -510,12 +602,40 @@ def _main():
 
     # TODO - don't assume run in own directory
 
-    if not args.march16:
+    if args.march16:
+        _march16_plots()
+    elif args.multi_b_cutoff:
+        # Check if runs have been performed.
+        # If not, perform them.
+        out_prefix = "run_multi_b_cutoff"
+        out_prefix_bxz = "{}_bxz".format(out_prefix)
+        if not os.path.exists(_min_env_filename(out_prefix_bxz)):
+            base_env_path_bxz = "multi_b_cutoff_bxz_env.json"
+            min_envs_bxz = _get_min_envs(base_env_path_bxz, None, out_prefix_bxz, True, 30, 30, None)
+        else:
+            min_envs_bxz = _read_min_envs(out_prefix_bxz)
+
+        out_prefix_F = "{}_F".format(out_prefix)
+        if not os.path.exists(_min_env_filename(out_prefix_F)):
+            base_env_path_F = "multi_b_cutoff_F_env.json"
+            min_envs_F = _get_min_envs(base_env_path_F, None, out_prefix_F, True, 30, 30, None)
+        else:
+            min_envs_F = _read_min_envs(out_prefix_F)
+
+        _add_averages(min_envs_bxz)
+        _add_averages(min_envs_F)
+
+        delta_Bx = 0.1
+        aspect = [0.4, 1.0]
+        # mode2-m_A and mode1-m_B correspondence reflects change between original formulation
+        # and paper.
+        labels_A = ["$m_A$ ($b_{xz}$)", "$m_A$ ($F_{xy}$)"]
+        labels_B = ["$m_B$ ($b_{xz}$)", "$m_B$ ($F_{xy}$)"]
+        _near_M_b_cutoff_plot_multiple(min_envs_bxz, min_envs_F, out_prefix,
+                "mode2_avg", "mode1_avg", labels_A, labels_B, delta_Bx, aspect)
+    else:
         min_envs = _get_min_envs(args.base_env_path, args.read_prefix, args.out_prefix, args.ions, args.num_Bs, args.num_Ts, args.npar)
         _make_plots(min_envs, args.out_prefix, args.ions, args.plot_spectrum, args.plot_dos, args.only_B, args.only_T)
-        return
-    else:
-        _march16_plots()
 
 if __name__ == "__main__":
     _main()
