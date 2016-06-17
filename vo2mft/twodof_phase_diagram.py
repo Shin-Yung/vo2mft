@@ -605,20 +605,32 @@ def _main():
     if args.march16:
         _march16_plots()
     elif args.multi_b_cutoff:
+        num_Bs, num_Ts = 100, 100
+        bounds = [[0.01, 0.6], [0.01, 0.5]]
+        ions = True
+        npar = None
+
         # Check if runs have been performed.
         # If not, perform them.
         out_prefix = "run_multi_b_cutoff"
         out_prefix_bxz = "{}_bxz".format(out_prefix)
+
         if not os.path.exists(_min_env_filename(out_prefix_bxz)):
+            read_prefix = None
             base_env_path_bxz = "multi_b_cutoff_bxz_env.json"
-            min_envs_bxz = _get_min_envs(base_env_path_bxz, None, out_prefix_bxz, True, 30, 30, None)
+            min_envs_bxz = _get_min_envs(base_env_path_bxz, read_prefix, out_prefix_bxz,
+                    ions, num_Bs, num_Ts, npar, bounds)
         else:
             min_envs_bxz = _read_min_envs(out_prefix_bxz)
 
         out_prefix_F = "{}_F".format(out_prefix)
         if not os.path.exists(_min_env_filename(out_prefix_F)):
+            read_prefix = None
             base_env_path_F = "multi_b_cutoff_F_env.json"
-            min_envs_F = _get_min_envs(base_env_path_F, None, out_prefix_F, True, 30, 30, None)
+            initial_vals = "mode_symmetric"
+
+            min_envs_F = _get_min_envs(base_env_path_F, read_prefix, out_prefix_F,
+                    ions, num_Bs, num_Ts, npar, bounds, initial_vals)
         else:
             min_envs_F = _read_min_envs(out_prefix_F)
 
