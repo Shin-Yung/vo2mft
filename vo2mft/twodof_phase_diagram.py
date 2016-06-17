@@ -5,6 +5,8 @@ import os
 import json
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.offsetbox import AnchoredText
+from matplotlib.font_manager import FontProperties
 from vo2mft.twodof_environment import Jbe
 from vo2mft.min_free_energy import minimize_free_energy
 from vo2mft.solve import read_env_file
@@ -333,7 +335,8 @@ def _near_M_b_cutoff_plot(min_envs, out_prefix, env_val_1, env_val_2, env_val_la
         plt.plot(Ts_1, vals_1, 'r-', label=env_val_label_1, linewidth=4)
         plt.plot(Ts_2, vals_2, 'k--', label=env_val_label_2, linewidth=4)
 
-        plt.legend(loc=0, fontsize='x-large', title="$b_x/4J_b =$ {:.4f}".format(B))
+        legend = plt.legend(loc=0, fontsize='x-large', title="$b_x/4J_b =$ {:.4f}".format(B))
+        legend.get_title().set_fontsize('x-large')
 
         plt.savefig(out_prefix + '_Bxy_{:.4f}.png'.format(B), bbox_inches='tight', dpi=500)
         #plt.savefig(out_prefix + '_Bxy_{:.4f}.eps'.format(B), bbox_inches='tight', dpi=500)
@@ -343,6 +346,7 @@ def _near_M_b_cutoff_plot(min_envs, out_prefix, env_val_1, env_val_2, env_val_la
             plt.close('all')
 
 def _near_M_b_cutoff_plot_multiple(min_envs_1, min_envs_2, out_prefix, env_val_A, env_val_B, env_val_labels_A, env_val_labels_B, delta_Bx, aspect=None):
+    show_legend_labels = True
     # Find b cutoff.
     max_val_Bx = max(_find_max_Bx(min_envs_1, env_val_A, env_val_B),
             _find_max_Bx(min_envs_2, env_val_A, env_val_B))
@@ -377,12 +381,23 @@ def _near_M_b_cutoff_plot_multiple(min_envs_1, min_envs_2, out_prefix, env_val_A
         label_A1, label_A2 = env_val_labels_A
         label_B1, label_B2 = env_val_labels_B
 
-        plt.plot(Ts_A_1, vals_A_1, 'k-', label=label_A1)                            # solid black, m_A(1)
-        plt.plot(Ts_B_1, vals_B_1, color='gray', linestyle='-', label=label_B1)     # solid gray, m_B(1)
-        plt.plot(Ts_A_2, vals_A_2, 'k--', label=label_A2)                           # dashed black, m_A(2)
-        plt.plot(Ts_B_2, vals_B_2, color='gray', linestyle='--', label=label_B2)    # dashed gray, m_B(2)
+        if show_legend_labels:
+            plt.plot(Ts_A_1, vals_A_1, 'k-', label=label_A1)                            # solid black, m_A(1)
+            plt.plot(Ts_B_1, vals_B_1, color='gray', linestyle='-', label=label_B1)     # solid gray, m_B(1)
+            plt.plot(Ts_A_2, vals_A_2, 'k--', label=label_A2)                           # dashed black, m_A(2)
+            plt.plot(Ts_B_2, vals_B_2, color='gray', linestyle='--', label=label_B2)    # dashed gray, m_B(2)
+            legend = plt.legend(loc=0, fontsize='x-large', title="$b_x/4J_b = {:.4f}$".format(B))
+            legend.get_title().set_fontsize('x-large')
+        else:
+            plt.plot(Ts_A_1, vals_A_1, 'k-')                            # solid black, m_A(1)
+            plt.plot(Ts_B_1, vals_B_1, color='gray', linestyle='-')     # solid gray, m_B(1)
+            plt.plot(Ts_A_2, vals_A_2, 'k--')                           # dashed black, m_A(2)
+            plt.plot(Ts_B_2, vals_B_2, color='gray', linestyle='--')    # dashed gray, m_B(2)
 
-        plt.legend(loc=0, fontsize='x-large', title="$b_x/4J_b =$ {:.4f}".format(B))
+            abox = AnchoredText("$b_x/4J_b =$ {:.4f}".format(B), loc=3,
+                    prop={"size": "x-large"}, frameon=True)
+            ax = plt.gca()
+            ax.add_artist(abox)
 
         plt.savefig(out_prefix + '_Bxy_{:.4f}.png'.format(B), bbox_inches='tight', dpi=500)
         #plt.savefig(out_prefix + '_Bxy_{:.4f}.eps'.format(B), bbox_inches='tight', dpi=500)
