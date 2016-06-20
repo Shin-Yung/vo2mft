@@ -382,17 +382,18 @@ def _near_M_b_cutoff_plot_multiple(min_envs_1, min_envs_2, out_prefix, env_val_A
         label_B1, label_B2 = env_val_labels_B
 
         if show_legend_labels:
-            plt.plot(Ts_A_1, vals_A_1, 'k-', label=label_A1)                            # solid black, m_A(1)
-            plt.plot(Ts_B_1, vals_B_1, color='gray', linestyle='-', label=label_B1)     # solid gray, m_B(1)
-            plt.plot(Ts_A_2, vals_A_2, 'k--', label=label_A2)                           # dashed black, m_A(2)
-            plt.plot(Ts_B_2, vals_B_2, color='gray', linestyle='--', label=label_B2)    # dashed gray, m_B(2)
+            plt.plot(Ts_A_1, vals_A_1, 'k-', label=label_A1, linewidth=6)                            # solid black, m_A(1)
+            plt.plot(Ts_B_1, vals_B_1, color='gray', linestyle='-', label=label_B1, linewidth=2)     # solid gray, m_B(1)
+            plt.plot(Ts_A_2, vals_A_2, 'k--', label=label_A2, linewidth=6)                           # dashed black, m_A(2)
+            plt.plot(Ts_B_2, vals_B_2, color='gray', linestyle='--', label=label_B2, linewidth=2)    # dashed gray, m_B(2)
+
             legend = plt.legend(loc=0, fontsize='x-large', title="$b_x/4J_b = {:.4f}$".format(B))
             legend.get_title().set_fontsize('x-large')
         else:
-            plt.plot(Ts_A_1, vals_A_1, 'k-')                            # solid black, m_A(1)
-            plt.plot(Ts_B_1, vals_B_1, color='gray', linestyle='-')     # solid gray, m_B(1)
-            plt.plot(Ts_A_2, vals_A_2, 'k--')                           # dashed black, m_A(2)
-            plt.plot(Ts_B_2, vals_B_2, color='gray', linestyle='--')    # dashed gray, m_B(2)
+            plt.plot(Ts_A_1, vals_A_1, 'k-', linewidth=6)                            # solid black, m_A(1)
+            plt.plot(Ts_B_1, vals_B_1, color='gray', linestyle='-', linewidth=2)     # solid gray, m_B(1)
+            plt.plot(Ts_A_2, vals_A_2, 'k--', linewidth=6)                           # dashed black, m_A(2)
+            plt.plot(Ts_B_2, vals_B_2, color='gray', linestyle='--', linewidth=2)    # dashed gray, m_B(2)
 
             abox = AnchoredText("$b_x/4J_b =$ {:.4f}".format(B), loc=3,
                     prop={"size": "x-large"}, frameon=True)
