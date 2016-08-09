@@ -35,7 +35,8 @@ Build the solver:
 
     cd vo2solve/vo2solve_front/
     go build
-    cd ../..
+    cd ../../twodof/vo2solve_front
+    go build
 
 Build the DOS calculator:
 
