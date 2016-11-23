@@ -345,8 +345,17 @@ def _near_M_b_cutoff_plot(min_envs, out_prefix, env_val_1, env_val_2, env_val_la
         if aspect != None:
             plt.close('all')
 
-def _near_M_b_cutoff_plot_multiple(min_envs_1, min_envs_2, out_prefix, env_val_A, env_val_B, env_val_labels_A, env_val_labels_B, delta_Bx, aspect=None):
-    show_legend_labels = True
+def find_k_nearest(kt, d):
+    '''Return the key of the dict d which is closest to kt.
+    '''
+    nearest = None
+    for k in d.keys():
+        if nearest is None or abs(kt - k) < abs(kt - nearest):
+            nearest = k
+
+    return nearest
+
+def _near_M_b_cutoff_plot_multiple(min_envs_1, min_envs_2, out_prefix, env_val_A, env_val_B, env_val_labels_A, env_val_labels_B, delta_Bx, aspect=None, plot_all_Bs=False):
     # Find b cutoff.
     max_val_Bx = max(_find_max_Bx(min_envs_1, env_val_A, env_val_B),
             _find_max_Bx(min_envs_2, env_val_A, env_val_B))
@@ -357,55 +366,86 @@ def _near_M_b_cutoff_plot_multiple(min_envs_1, min_envs_2, out_prefix, env_val_A
     B_valA_2_data, B_valB_2_data = _collect_constB_data(min_envs_2, max_val_Bx,
         env_val_A, env_val_B, delta_Bx)
 
-    # Make plots vs T at fixed b.
-    # Assume each data set has the same set of B's
+    # NOTE - Will assume each data set has the same set of B's
     # (that is, for each set at least 1 T exists at each b).
-    for B in B_valA_1_data.keys():
+    if plot_all_Bs:
+        Bs_to_plot = B_valA_1_data.keys()
+        all_show_legend_labels = [True]*len(keys)
+    else:
+        near_keys = [0.4510, 0.4748, 0.4987]
+        Bs_to_plot = [find_k_nearest(kt, B_valA_1_data) for kt in near_keys]
+        all_show_legend_labels = [True, False, False]
+
+    if aspect != None:
+        w, h = 10.5 * aspect[0] * len(Bs_to_plot), 10.5 * aspect[1]
+        fig = plt.figure(figsize=(w, h))
+    else:
+        fig = plt.figure()
+
+    plt.subplots_adjust(wspace=0.001)
+
+    x_limits, y_limits = None, None
+    axes = []
+    # Make plots vs T at fixed b.
+    for B_index, (B, show_legend_labels) in enumerate(zip(Bs_to_plot, all_show_legend_labels)):
         Ts_A_1, vals_A_1, Ts_B_1, vals_B_1 = _sort_Bdata(B, B_valA_1_data, B_valB_1_data)
         Ts_A_2, vals_A_2, Ts_B_2, vals_B_2 = _sort_Bdata(B, B_valA_2_data, B_valB_2_data)
 
-        if aspect != None:
-            w, h = 10.0 * aspect[0], 10.0 * aspect[1]
-            plt.figure(figsize=(w, h))
+        ax = fig.add_subplot(1, len(Bs_to_plot), B_index+1)
+        axes.append(ax)
 
-        plt.xlabel("$T/4J_{b}$", fontsize='x-large')
+        ax.set_xlabel("$T/4J_{b}$", fontsize='x-large')
 
-        min_x = _all_min([Ts_A_1, Ts_B_1, Ts_A_2, Ts_B_2])
-        max_x = _all_max([Ts_A_1, Ts_B_1, Ts_A_2, Ts_B_2])
-        min_y = _all_min([vals_A_1, vals_B_1, vals_A_2, vals_B_2])
-        max_y = _all_max([vals_A_1, vals_B_1, vals_A_2, vals_B_2])
+        if B_index == 0:
+            min_x = _all_min([Ts_A_1, Ts_B_1, Ts_A_2, Ts_B_2])
+            max_x = _all_max([Ts_A_1, Ts_B_1, Ts_A_2, Ts_B_2])
+            min_y = _all_min([vals_A_1, vals_B_1, vals_A_2, vals_B_2])
+            max_y = _all_max([vals_A_1, vals_B_1, vals_A_2, vals_B_2])
+            x_limits = (min_x, max_x)
+            y_limits = (min_y, max_y)
 
-        plt.xlim(min_x, max_x)
-        plt.ylim(min_y, max_y)
+            ax.set_xlim(min_x, max_x)
+            ax.set_ylim(min_y, max_y)
+        else:
+            ax.set_xlim(x_limits[0], x_limits[1])
+            ax.set_ylim(y_limits[0], y_limits[1])
 
         label_A1, label_A2 = env_val_labels_A
         label_B1, label_B2 = env_val_labels_B
 
         if show_legend_labels:
-            plt.plot(Ts_A_1, vals_A_1, 'k-', label=label_A1, linewidth=6)                            # solid black, m_A(1)
-            plt.plot(Ts_B_1, vals_B_1, color='gray', linestyle='-', label=label_B1, linewidth=2)     # solid gray, m_B(1)
-            plt.plot(Ts_A_2, vals_A_2, 'k--', label=label_A2, linewidth=6)                           # dashed black, m_A(2)
-            plt.plot(Ts_B_2, vals_B_2, color='gray', linestyle='--', label=label_B2, linewidth=2)    # dashed gray, m_B(2)
+            ax.plot(Ts_A_1, vals_A_1, 'k-', label=label_A1, linewidth=6)                            # solid black, m_A(1)
+            ax.plot(Ts_B_1, vals_B_1, color='limegreen', linestyle='-', label=label_B1, linewidth=2)     # solid gray, m_B(1)
+            ax.plot(Ts_A_2, vals_A_2, 'k--', label=label_A2, linewidth=6)                           # dashed black, m_A(2)
+            ax.plot(Ts_B_2, vals_B_2, color='limegreen', linestyle='--', label=label_B2, linewidth=2)    # dashed gray, m_B(2)
 
-            legend = plt.legend(loc=0, fontsize='x-large', title="$b_x/4J_b = {:.4f}$".format(B))
+            legend = ax.legend(loc=0, fontsize='x-large', title="$b_x/4J_b = {:.4f}$".format(B))
             legend.get_title().set_fontsize('x-large')
         else:
-            plt.plot(Ts_A_1, vals_A_1, 'k-', linewidth=6)                            # solid black, m_A(1)
-            plt.plot(Ts_B_1, vals_B_1, color='gray', linestyle='-', linewidth=2)     # solid gray, m_B(1)
-            plt.plot(Ts_A_2, vals_A_2, 'k--', linewidth=6)                           # dashed black, m_A(2)
-            plt.plot(Ts_B_2, vals_B_2, color='gray', linestyle='--', linewidth=2)    # dashed gray, m_B(2)
+            ax.plot(Ts_A_1, vals_A_1, 'k-', linewidth=6)                            # solid black, m_A(1)
+            ax.plot(Ts_B_1, vals_B_1, color='limegreen', linestyle='-', linewidth=2)     # solid gray, m_B(1)
+            ax.plot(Ts_A_2, vals_A_2, 'k--', linewidth=6)                           # dashed black, m_A(2)
+            ax.plot(Ts_B_2, vals_B_2, color='limegreen', linestyle='--', linewidth=2)    # dashed gray, m_B(2)
 
             abox = AnchoredText("$b_x/4J_b =$ {:.4f}".format(B), loc=3,
                     prop={"size": "x-large"}, frameon=True)
-            ax = plt.gca()
             ax.add_artist(abox)
 
-        plt.savefig(out_prefix + '_Bxy_{:.4f}.png'.format(B), bbox_inches='tight', dpi=500)
-        #plt.savefig(out_prefix + '_Bxy_{:.4f}.eps'.format(B), bbox_inches='tight', dpi=500)
-        plt.clf()
+    yticklabels = None
+    for ax in axes[1:]:
+        if yticklabels is None:
+            yticklabels = ax.get_yticklabels()
+        else:
+            yticklabels = yticklabels + ax.get_yticklabels()
 
-        if aspect != None:
-            plt.close('all')
+    plt.setp(yticklabels, visible=False)
+
+    plt.savefig(out_prefix + '_Bxy_range.png', bbox_inches='tight', dpi=500)
+    plt.savefig(out_prefix + '_Bxy_range.eps', bbox_inches='tight', dpi=500)
+    plt.clf()
+
+    if aspect != None:
+        plt.close('all')
 
 def _check_only_ok(Bratio, Tratio, only_B, only_T):
     if only_B != None and only_T != None:
