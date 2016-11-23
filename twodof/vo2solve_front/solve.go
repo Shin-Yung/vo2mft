@@ -1,7 +1,7 @@
 package main
 
 import (
-	"bitbucket.org/tflovorn/vo2mft/twodof"
+	"github.com/tflovorn/vo2mft/twodof"
 	"bytes"
 	"flag"
 	"fmt"

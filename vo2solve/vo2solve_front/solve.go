@@ -1,7 +1,7 @@
 package main
 
 import (
-	"bitbucket.org/tflovorn/vo2mft/vo2solve"
+	"github.com/tflovorn/vo2mft/vo2solve"
 	"bytes"
 	"flag"
 	"fmt"
