@@ -355,7 +355,8 @@ def find_k_nearest(kt, d):
 
     return nearest
 
-def _near_M_b_cutoff_plot_multiple(min_envs_1, min_envs_2, out_prefix, env_val_A, env_val_B, env_val_labels_A, env_val_labels_B, delta_Bx, aspect=None, plot_all_Bs=False, fixed_xticks=None):
+def _near_M_b_cutoff_plot_multiple(min_envs_1, min_envs_2, out_prefix, env_val_A, env_val_B,
+        env_val_labels_A, env_val_labels_B, delta_Bx, aspect=None, plot_all_Bs=False, fixed_xticks=None):
     # Find b cutoff.
     max_val_Bx = max(_find_max_Bx(min_envs_1, env_val_A, env_val_B),
             _find_max_Bx(min_envs_2, env_val_A, env_val_B))
@@ -371,10 +372,12 @@ def _near_M_b_cutoff_plot_multiple(min_envs_1, min_envs_2, out_prefix, env_val_A
     if plot_all_Bs:
         Bs_to_plot = B_valA_1_data.keys()
         all_show_legend_labels = [True]*len(keys)
+        subfig_labels = None
     else:
         near_keys = [0.4510, 0.4748, 0.4987]
         Bs_to_plot = [find_k_nearest(kt, B_valA_1_data) for kt in near_keys]
         all_show_legend_labels = [True, False, False]
+        subfig_labels = ["(a)", "(b)", "(c)"]
 
     if aspect != None:
         w, h = 10.5 * aspect[0] * len(Bs_to_plot), 10.5 * aspect[1]
@@ -412,6 +415,10 @@ def _near_M_b_cutoff_plot_multiple(min_envs_1, min_envs_2, out_prefix, env_val_A
 
         if fixed_xticks is not None:
             ax.set_xticks(fixed_xticks)
+
+        if subfig_labels is not None:
+            subfig_label = subfig_labels[B_index]
+            ax.text(0.01, 0.96, subfig_label, fontsize='x-large', transform=ax.transAxes)
 
         label_A1, label_A2 = env_val_labels_A
         label_B1, label_B2 = env_val_labels_B
