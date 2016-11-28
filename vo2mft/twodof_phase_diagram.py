@@ -355,7 +355,7 @@ def find_k_nearest(kt, d):
 
     return nearest
 
-def _near_M_b_cutoff_plot_multiple(min_envs_1, min_envs_2, out_prefix, env_val_A, env_val_B, env_val_labels_A, env_val_labels_B, delta_Bx, aspect=None, plot_all_Bs=False):
+def _near_M_b_cutoff_plot_multiple(min_envs_1, min_envs_2, out_prefix, env_val_A, env_val_B, env_val_labels_A, env_val_labels_B, delta_Bx, aspect=None, plot_all_Bs=False, fixed_xticks=None):
     # Find b cutoff.
     max_val_Bx = max(_find_max_Bx(min_envs_1, env_val_A, env_val_B),
             _find_max_Bx(min_envs_2, env_val_A, env_val_B))
@@ -409,6 +409,9 @@ def _near_M_b_cutoff_plot_multiple(min_envs_1, min_envs_2, out_prefix, env_val_A
         else:
             ax.set_xlim(x_limits[0], x_limits[1])
             ax.set_ylim(y_limits[0], y_limits[1])
+
+        if fixed_xticks is not None:
+            ax.set_xticks(fixed_xticks)
 
         label_A1, label_A2 = env_val_labels_A
         label_B1, label_B2 = env_val_labels_B
@@ -700,7 +703,8 @@ def _main():
         labels_A = ["$m_A$ ($b_{xz}$)", "$m_A$ ($F_{xy}$)"]
         labels_B = ["$m_B$ ($b_{xz}$)", "$m_B$ ($F_{xy}$)"]
         _near_M_b_cutoff_plot_multiple(min_envs_bxz, min_envs_F, out_prefix,
-                "mode2_avg", "mode1_avg", labels_A, labels_B, delta_Bx, aspect)
+                "mode2_avg", "mode1_avg", labels_A, labels_B, delta_Bx, aspect,
+                fixed_xticks=[0.05, 0.15, 0.25, 0.35, 0.45])
     else:
         min_envs = _get_min_envs(args.base_env_path, args.read_prefix, args.out_prefix, args.ions, args.num_Bs, args.num_Ts, args.npar)
         _make_plots(min_envs, args.out_prefix, args.ions, args.plot_spectrum, args.plot_dos, args.only_B, args.only_T)
