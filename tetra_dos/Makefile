@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS=-Wall -O3 -DHAVE_INLINE
 LDFLAGS=-lgsl -lgslcblas -lm
-OBJFILES=bstrlib/bstrlib.o bstrlib/bstraux.o elHamiltonian.o DosValues.o ctetra/submesh.o ctetra/dos.o ctetra/numstates.o ctetra/fermi.o ctetra/weights.o ctetra/sum.o ctetra/ecache.o ctetra/tetra.o
+OBJFILES=bstrlib/bstrlib.o bstrlib/bstraux.o elHamiltonian.o DosValues.o ctetra/submesh.o ctetra/dos.o ctetra/numstates.o ctetra/fermi.o ctetra/weights.o ctetra/sum.o ctetra/ecache.o ctetra/tetra.o ctetra/evcache.o
 
 all: bstrlib.o bstraux.o elHamiltonian.o DosValues.o RunDosValues.out
 

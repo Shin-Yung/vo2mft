@@ -30,7 +30,7 @@ double* DosValues(Environment *env, int n, double *Es, double num_dos) {
     }
 
     // Calculate DOS values.
-    double *dos_vals = Tetra_AllDosList(Efn, n, num_bands, R, Es, num_dos);
+    double *dos_vals = Tetra_AllDosList(Efn, n, n, n, num_bands, R, Es, num_dos);
 
     // Clean up memory.
     gsl_matrix_free(R);
