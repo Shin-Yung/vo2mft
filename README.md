@@ -70,3 +70,10 @@ Get setuptools and install using setup.py:
 
 (NOTE - the mechanism used to traverse the directory structure of the repo is broken
 if setup.py install is used instead of develop. TODO - fix this?)
+
+# Usage
+
+To build Fig. 2 of "Complex quasi two-dimensional crystalline order embedded in VO2 and other crystals":
+
+    cd vo2mft
+    python3 twodof_phase_diagram.py --multi_b_cutoff
